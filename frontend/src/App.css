@@ -1,0 +1,311 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #f6f5ff 0%, #8d63ff 100%);
+  height: 100vh;
+  color: #2d3748;
+}
+
+.app-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* Add new image placeholder box */
+.image-box {
+  width: 40%;
+  height: 80vh;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(139, 92, 246, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.therapist-image-frame {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #8b5cf6;
+  border-radius: 15px;
+  padding: 15px;
+}
+
+.therapist-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.chat-window {
+  width: 40%;
+  max-width: 800px;
+  height: 80vh;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(139, 92, 246, 0.15);
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Chat container styles */
+.cs-main-container {
+  border-radius: 16px;
+  background: white;
+}
+
+.cs-message-list {
+  background: #faf8ff;
+  padding: 20px 0;
+}
+
+.cs-message__content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
+  padding: 14px 18px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  line-height: 1.5;
+}
+
+.cs-message--outgoing .cs-message__content {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+}
+
+.cs-chat-container .cs-message-input {
+  border-top: none;
+  padding: 16px;
+  background: white;
+}
+
+.cs-message-input__content-editor-wrapper {
+  background: #f0f5ff;
+  border-radius: 24px;
+  padding: 12px 16px;
+  min-height: 20px;
+  font-size: 14px;
+}
+
+.cs-message-input__content-editor {
+  background: transparent;
+  padding: 0;
+  min-height: 20px;
+  font-size: 14px;
+}
+
+.cs-message-input__content-editor {
+  background: #f0f5ff;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.cs-message-input__content-editor:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.cs-typing-indicator {
+  background: rgba(139, 92, 246, 0.1);
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #8b5cf6;
+}
+
+.cs-conversation-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  background: rgb(255, 255, 255);
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.05);
+}
+
+.cs-conversation-header__user-name {
+  font-weight: 600;
+  font-size: 16px;
+  background-color: transparent !important;
+}
+
+.cs-conversation-header__info {
+  color: #666;
+  font-size: 13px;
+  background-color: transparent !important;
+}
+
+.cs-avatar {
+  border-radius: 50%;
+  border: 2px solid #e6e6e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chat-window {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .app-container {
+    padding: 0;
+  }
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: white;
+}
+
+.voice-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: none;
+}
+
+.toggle-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #8b5cf6;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #8b5cf6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.controls-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.model-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.model-select {
+  padding: 8px;
+  border-radius: 20px;
+  border: 2px solid #8b5cf6;
+  background: white;
+  color: #4c1d95;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.model-select:hover {
+  border-color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.nina-typing-indicator {
+  position: absolute;
+  bottom: 70px;  /* Adjust based on your layout */
+  left: 20px;
+  color: #8b5cf6;  /* Same purple as paper plane */
+  opacity: 0.7;
+  font-size: 20px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}

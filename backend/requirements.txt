@@ -1,0 +1,7 @@
+mem0ai
+flask
+flask-cors
+python-dotenv
+openai
+anthropic
+requests 
