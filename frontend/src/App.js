@@ -65,6 +65,7 @@ function App() {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
+        // This is the "data" variable in the chat(): inside of app.py
         body: JSON.stringify({
           message: text,
           sessionId: 'default',

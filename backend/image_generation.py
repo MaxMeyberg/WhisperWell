@@ -5,6 +5,7 @@ import base64
 from typing import Dict, Optional
 import logging
 import random
+from nina_thought_process import get_ai_response
 
 logger = logging.getLogger(__name__)
 
@@ -12,67 +13,30 @@ BFL_API_KEY = os.getenv("BLACK_FOREST_API_KEY")
 BFL_API_URL = 'https://api.us1.bfl.ai/v1/flux-pro-1.1'
 REFERENCE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "assets/Therapist-F-Smile.png")
 
-def get_emotion_details(emotion: str) -> Dict[str, str]:
-    """Get detailed emotion descriptions"""
-    emotion_map = {
-        # Serious Support States
-        'deeply_concerned': {
-            'expression': 'intense concern with compassionate eyes, serious but gentle expression',
-            'gesture': 'leaning forward attentively, hands clasped, showing full engagement',
-            'intensity': 'high'
-        },
-        'gentle_concern': {
-            'expression': 'soft worried eyes, slight furrow in brows, gentle understanding smile',
-            'gesture': 'open posture, one hand slightly raised in calming gesture',
-            'intensity': 'moderate'
-        },
-        'warm_support': {
-            'expression': 'warm understanding smile, soft empathetic eyes',
-            'gesture': 'relaxed open posture, slightly tilted head showing attention',
-            'intensity': 'moderate'
-        },
-        # Basic Emotions
-        'empathetic': {
-            'expression': 'tender understanding expression, eyes showing deep empathy',
-            'gesture': 'gentle forward lean, hands open in welcoming gesture',
-            'intensity': 'moderate'
-        },
-        'sobbing': {
-            'expression': 'deeply pained expression with glistening eyes, brows drawn together in shared grief',
-            'gesture': 'leaning forward with both hands clasped near heart, shoulders slightly tensed in emotional response',
-            'intensity': 'high'
-        },
-        'calm_steady': {
-            'expression': 'serene and steady expression, grounding presence',
-            'gesture': 'straight stable posture, hands calmly placed',
-            'intensity': 'subtle'
-        },
-        'reassuring': {
-            'expression': 'confident reassuring smile, steady gaze',
-            'gesture': 'strong protective posture, slight nod of understanding',
-            'intensity': 'moderate'
-        },
 
-        # Positive States
-        'joyful': {
-            'expression': 'bright genuine smile, eyes crinkling with joy',
-            'gesture': 'energetic but professional posture, animated hand gesture',
-            'intensity': 'high'
-        },
-        'encouraging': {
-            'expression': 'proud smile, eyes showing belief in client',
-            'gesture': 'confident posture, encouraging hand gesture',
-            'intensity': 'moderate'
-        },
+def get_emotion_details(emotion: str, client=None) -> Dict[str, str]:
+    try:
+        prompt = [
+            {"role": "system", "content": """
+                You are an expert at describing subtle facial expressions and body language.
+                Given an emotion, describe how a professional female therapist named Nina should appear.
+                Focus ONLY on expression and gesture. Format as:
+                EXPRESSION: [facial details]
+                GESTURE: [body language details]
+                Keep descriptions natural and subtle - no exaggerated expressions.
+            """},
+            {"role": "user", "content": f"Describe Nina showing {emotion}"}
+        ]
+        
+        response = get_ai_response(prompt, client=client)
+        # Need to parse EXPRESSION and GESTURE from response
+        # Currently just returns raw response
+    except Exception as e:
+        logger.error(f"Failed to get emotion details: {str(e)}")
+        return emotion  # This returns str instead of Dict[str, str]
+    
+    return response
 
-        # Default State
-        'neutral': {
-            'expression': 'professional warmth with attentive eyes, gentle authentic smile',
-            'gesture': 'balanced welcoming posture, subtle head tilt, hands resting naturally',
-            'intensity': 'subtle'
-        }
-    }
-    return emotion_map.get(emotion, emotion_map['neutral'])
 
 def poll_for_image(polling_url: str, max_attempts: int = 60, delay_ms: int = 2000) -> Optional[str]:
     """Poll for generated image"""
@@ -108,10 +72,12 @@ def poll_for_image(polling_url: str, max_attempts: int = 60, delay_ms: int = 200
     logger.error("Polling timed out")
     return None
 
-def generate_image(emotion: str) -> Optional[str]:
+
+def generate_image(emotion: str, client=None) -> Optional[str]:
     """Generate image based on emotional state using Black Forest Labs"""
     try:
-        emotion_details = get_emotion_details(emotion)
+        if client is None:
+            raise ValueError("OpenAI client not provided")
         
         # Read and encode reference image
         try:
@@ -136,9 +102,7 @@ def generate_image(emotion: str) -> Optional[str]:
             - Dark grey blazer over cream blouse
             - Professional office background
 
-            Current Emotional Expression:
-            - {emotion_details['expression']}
-            - {emotion_details['gesture']}
+            Current Emotional Expression: {emotion}
             
             Important:
             - Focus on natural, authentic emotional expression
@@ -146,9 +110,7 @@ def generate_image(emotion: str) -> Optional[str]:
             - Clean anime style with clear emotional reading
             - Keep same art style, character design, and environment as reference
             - Maintain exact same clothing, hair, and background
-            - Change ONLY: 
-                * Facial expression: {emotion_details['expression']}
-                * Body language: {emotion_details['gesture']}
+            - Change ONLY facial expression and body language to match emotion
             """,
             "width": 1024,
             "height": 1024,

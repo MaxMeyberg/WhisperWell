@@ -1,10 +1,10 @@
+from openai import OpenAI
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os
-from openai import OpenAI
 from mem0 import MemoryClient
 from dotenv import load_dotenv
-from prompts import nina_personality    
+from nina_thought_process import ( get_ai_response, analyze_emotional_context, nina_personality)  # This works because of __init__.py, w.o init.oy we would need to imoort each of these 1 by 1.   
 import logging
 import requests
 from image_generation import generate_image
@@ -59,23 +59,23 @@ mem0_client = MemoryClient(api_key=os.environ['MEM0_API_KEY'])
 allChatHistory= {}
 PREVIOUS_EMOTION = 'neutral'  # Track previous emotional state
 
-def get_ai_response(conversation, model="gpt-3.5"):
-    try:
-        if model == "gpt-4":
-            response = open_ai_client.chat.completions.create(
-                model="gpt-4",
-                messages=conversation
-            )
-            return response.choices[0].message.content
-        elif model == "gpt-3.5":
-            response = open_ai_client.chat.completions.create(
-                model="gpt-3.5-turbo-0125",
-                messages=conversation
-            )
-            return response.choices[0].message.content
-    except Exception as e:
-        logger.error(f"AI response error for model {model}: {str(e)}")
-        return f"Error with {model}: {str(e)}"
+# def get_ai_response(conversation, model="gpt-3.5"):
+#     try:
+#         if model == "gpt-4":
+#             response = open_ai_client.chat.completions.create(
+#                 model="gpt-4",
+#                 messages=conversation
+#             )
+#             return response.choices[0].message.content
+#         elif model == "gpt-3.5":
+#             response = open_ai_client.chat.completions.create(
+#                 model="gpt-3.5-turbo-0125",
+#                 messages=conversation
+#             )
+#             return response.choices[0].message.content
+#     except Exception as e:
+#         logger.error(f"AI response error for model {model}: {str(e)}")
+#         return f"Error with {model}: {str(e)}"
 
 def summarize_conversation(conversation):
     """Get a summary of the current conversation"""
@@ -84,7 +84,7 @@ def summarize_conversation(conversation):
         *conversation
     ]
     
-    summary = get_ai_response(summary_prompt)
+    summary = get_ai_response(summary_prompt, client=open_ai_client)
     return summary
 
 def get_running_summary(conversation):
@@ -100,97 +100,12 @@ def get_running_summary(conversation):
         *conversation
     ]
     
-    summary = get_ai_response(summary_prompt)
+    summary = get_ai_response(summary_prompt, client=open_ai_client)
     return summary
-
-# """OLD CODE"""
-# @app.route('/api/chat', methods=['POST'])
-# def chat():
-#     try:
-#         data = request.json
-#         if not data:
-#             return jsonify({"error": "No data provided"}), 400
-            
-#         sessionId = data.get('sessionId', 'default')
-#         user_message = data.get('message')
-#         voice_enabled = data.get('voiceEnabled', False)
-#         model = data.get('model', 'gpt-3.5')
-        
-#         logger.info(f"Received request - Model: {model}, Voice: {voice_enabled}")  # This will help debug
-        
-#         if not user_message:
-#             return jsonify({"error": "No message provided"}), 400
-        
-#         # Initialize conversation if needed
-#         if sessionId not in allChatHistory:
-#             system_prompt = nina_personality() 
-#             allChatHistory[sessionId] = [{"role": "system", "content": system_prompt}]
-        
-#         # Get AI response
-#         bot_reply = get_ai_response(allChatHistory[sessionId], model)
-#         if not bot_reply:
-#             return jsonify({"error": "Failed to get AI response"}), 500
-        
-#         # Get emotional context and generate image
-#         emotion = analyze_emotional_context(allChatHistory[sessionId])
-#         new_image_url = generate_image(emotion)
-        
-#         # Generate audio only if voice is enabled
-#         audio_data = None
-#         if voice_enabled:
-#             audio_data = generate_speech(bot_reply)
-        
-#         # Nina will keep track of what you say and what she says
-#         allChatHistory[sessionId].append({"role": "user", "content": user_message})
-#         allChatHistory[sessionId].append({"role": "assistant", "content": bot_reply})
-        
-#         # Update running summary after each exchange
-#         current_summary = get_running_summary(allChatHistory[sessionId])
-        
-#         # Replace old summary if it exists, or add new one
-#         summary_index = next((i for i, msg in enumerate(allChatHistory[sessionId]) 
-#                             if msg["role"] == "system" and "Current Summary:" in msg["content"]), None)
-        
-#         if summary_index is not None:
-#             allChatHistory[sessionId][summary_index] = {
-#                 "role": "system",
-#                 "content": f"Current Summary: {current_summary}"
-#             }
-#         else:
-#             allChatHistory[sessionId].append({
-#                 "role": "system",
-#                 "content": f"Current Summary: {current_summary}"
-#             })
-        
-#         # Save summary to long-term memory instead of raw conversation
-#         add_memory(sessionId, [{
-#             "role": "system",
-#             "content": f"Conversation Summary: {current_summary}"
-#         }])
-        
-#         # Get relevant past summaries for context
-#         memories = get_memories(sessionId, query=user_message)
-#         if memories:
-#             allChatHistory[sessionId].extend([
-#                 {"role": "system", "content": "Previous relevant memories:"},
-#                 *memories
-#             ])
-        
-#         return jsonify({
-#             "message": bot_reply,
-#             "sessionId": sessionId,
-#             "therapistImage": new_image_url,
-#             "audioData": base64.b64encode(audio_data).decode('utf-8') if audio_data else None
-#         })
-        
-#     except Exception as e:
-#         logger.error(f"Chat endpoint error: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
 
 
 """
-TODO: Manually write code for chat
+DONE: Manually write code for chat history
 """
 #structure of the 
 #decorator designed to create a URL path to OPEN AI 
@@ -278,13 +193,13 @@ def chat():
         #register the chat history for this current talk with Nina
         chatHistory = allChatHistory[sessionId]
         #send chatHistory to OPEN AI w get_ai_response, also takes care of what type of model to use
-        ninaResponse = get_ai_response(chatHistory, currModel)
+        ninaResponse = get_ai_response(chatHistory, client=open_ai_client)
         #add nina's response to the chat history
         chatHistory.append({"role": "assistant", "content": ninaResponse})
         log.zayin("Nina says: " + ninaResponse)
 
         emotion = analyze_emotional_context(chatHistory)
-        image = generate_image(emotion)
+        image = generate_image(emotion, client=open_ai_client)
         #see if voice is enabled to turn on/off audio
         audioData = generate_speech(ninaResponse) if voiceEnabled else None
         #audioData is actually in Binary now, so to make it into actual text: we do this voodo stuff:
@@ -303,95 +218,6 @@ def chat():
         log.he(f"Chat endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
-
-
-
-
-
-# the -> str TODO: Fix the len(chatHistory < 2) since we dont want neutral for first
-def analyze_emotional_context(chatHistory) -> str:
-    """
-    End Game TODO: Add in stuff like reall bad trauam like murder, grape, etc.
-    emotionMap is ranked by priority, so trauma is highest priority
-    """
-    
-    emotion_prompt = [
-        {"role": "system", "content": "You are a companion named Nina, and you are given a conversation between a user and you. Analyze the conversation and determine the most emotional context for the user's message. explain the emotion and body language in great detail as this will be used to generate an image. Use Dark Triad Psychology to determine the emotion."},
-        *chatHistory #the * is for Chat GPT to like the format and look at the recent chat history (remove the system part)
-    ]
-    emotion = get_ai_response(emotion_prompt)
-    print(emotion)
-    return emotion
-    # emotionMap = {
-    # # RANK 1: Critical Concerns
-    # 'trauma': {
-    #     'keyWords': ['trauma', 'abuse', 'assault', 'death', 'suicide'],
-    #     'emotion': 'deeply_concerned'  # Highest priority - serious issues
-    # },
-
-    # # RANK 2: Intense Emotional States
-    # 'sobbing': {
-    #     'keyWords': ['sobbing', 'crying hard', 'cant stop crying', 'breaking down'],
-    #     'emotion': 'sobbing'        # Strong emotional response needed
-    # },
-    # 'depression': {
-    #     'keyWords': ['depression', 'hopeless', 'worthless'],
-    #     'emotion': 'warm_support'   # Serious mental health support
-    # },
-
-    # # RANK 3: Mental Health Concerns
-    # 'anxiety': {
-    #     'keyWords': ['anxiety', 'panic', 'stress', 'worried'],
-    #     'emotion': 'gentle_concern' # Common but important concerns
-    # },
-    # 'fear': {
-    #     'keyWords': ['scared', 'afraid', 'terrified', 'lonely'],
-    #     'emotion': 'reassuring'     # Need for safety and support
-    # },
-
-    # # RANK 4: Basic Negative Emotions
-    # 'sadness': {
-    #     'keyWords': ['sad', 'crying', 'lonely'],
-    #     'emotion': 'empathetic'     # Common emotional support
-    # },
-    # 'anger': {
-    #     'keyWords': ['angry', 'mad', 'frustrated'],
-    #     'emotion': 'calm_steady'    # Stabilizing response
-    # },
-
-    # # RANK 5: Positive States (Lowest Priority)
-    # 'happy': {
-    #     'keyWords': ['happy', 'excited', 'great'],
-    #     'emotion': 'joyful'        # Share in joy but check negatives first
-    # },
-    # 'proud': {
-    #     'keyWords': ['proud', 'achieved', 'accomplished'],
-    #     'emotion': 'encouraging'   # Celebrate achievements last
-    # }}
-    
-    # #default emotion
-
-
-    # #get most recent message, [-1] is Nina's response, [-2] is the user's message
-    # userMessage_raw = chatHistory[-2]
-    # #the 'content' is from OPEN AI API formatting
-    # #lower() is to allow "DePreSSioN to become "depression"
-    # userMessage = userMessage_raw['content'].lower()
-
-    # # use emotionMap to find emotion to best fit user's message
-    # # Nina will cry if shes sees the word sad or "trauma"
-    # for emotion, keyWords in emotionMap.items():
-    #     #the only reason "any()" is allowed is cuz the emotionMap is ranked by priority
-    #     """deets
-    #     This looks at evert single word in the userMessage, and for each of those words finds if it matches ant keyWords
-    #     This is a TODO, as it can be improved for more advanced talking
-    #     """
-    #     if any(word in userMessage for word in keyWords['keyWords']):
-    #         currEmotion = emotion
-    #         break
-    
-    # return currEmotion
 
 
 
