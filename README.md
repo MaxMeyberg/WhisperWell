@@ -25,6 +25,7 @@ ANTHROPIC_API_KEY=xxxxx
 ELEVENLABS_API_KEY=xxxxx
 ELEVENLABS_VOICE_ID=xxxxx
 BLACK_FOREST_API_KEY=xxxxx
+MEM0_API_KEY=xxxxx
 ```
 
 Get your API keys here:
@@ -32,12 +33,16 @@ Get your API keys here:
 - Anthropic API key: https://console.anthropic.com/
 - ElevenLabs API key: https://elevenlabs.io/
 - Black Forest Labs API key: https://www.blackforestlabs.com/
+- Mem0 API key: https://mem0.ai/
 
 ### 3. Install Dependencies
 
 ```bash
 # Install Python packages
 pip install flask flask-cors python-dotenv openai anthropic requests
+
+# in main directory:
+pip install --upgrade openai
 
 # Navigate to frontend
 cd frontend
@@ -55,7 +60,8 @@ Open two terminal windows and run these commands:
 
 Terminal 1 (Backend):
 ```bash
-python backend/app.py
+cd backend
+python app.py
 ```
 
 Terminal 2 (Frontend):
@@ -72,7 +78,7 @@ The app will open automatically at http://localhost:3000
 - Start chatting with Nina!
 
 ## Features 🌟
-- 🤖 Choice between GPT-4 and Claude 3.5 AI models
+- 🤖 Choice between GPT-3.5 and GPT-4
 - 🗣️ Voice toggle for audio responses
 - 😊 Dynamic emotional responses with image generation
 - 📝 Real-time conversation analysis

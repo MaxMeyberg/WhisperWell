@@ -15,29 +15,60 @@ REFERENCE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "assets/Therapist
 def get_emotion_details(emotion: str) -> Dict[str, str]:
     """Get detailed emotion descriptions"""
     emotion_map = {
-        'sad': {
-            'expression': 'gentle empathy with soft downturned eyes, compassionate smile',
-            'gesture': 'head tilted to the side with a slight forward lean, one hand slightly raised in a supportive gesture',
-            'intensity': 'subtle'
+        # Serious Support States
+        'deeply_concerned': {
+            'expression': 'intense concern with compassionate eyes, serious but gentle expression',
+            'gesture': 'leaning forward attentively, hands clasped, showing full engagement',
+            'intensity': 'high'
         },
-        'angry': {
-            'expression': 'calm and grounding presence with a composed smile, steady reassuring gaze',
-            'gesture': 'sitting upright with shoulders back, hands folded calmly, slight forward lean to show engagement',
+        'gentle_concern': {
+            'expression': 'soft worried eyes, slight furrow in brows, gentle understanding smile',
+            'gesture': 'open posture, one hand slightly raised in calming gesture',
             'intensity': 'moderate'
         },
-        'happy': {
-            'expression': 'radiant warm smile with bright engaged eyes, slightly raised eyebrows',
-            'gesture': 'animated head tilt with open body language, shoulders relaxed, one hand gesturing warmly',
+        'warm_support': {
+            'expression': 'warm understanding smile, soft empathetic eyes',
+            'gesture': 'relaxed open posture, slightly tilted head showing attention',
             'intensity': 'moderate'
         },
-        'anxious': {
-            'expression': 'calming and reassuring expression with gentle eyes, soft understanding smile',
-            'gesture': 'stable grounding presence, head tilted slightly forward, hands positioned to show openness and support',
+        # Basic Emotions
+        'empathetic': {
+            'expression': 'tender understanding expression, eyes showing deep empathy',
+            'gesture': 'gentle forward lean, hands open in welcoming gesture',
+            'intensity': 'moderate'
+        },
+        'sobbing': {
+            'expression': 'deeply pained expression with glistening eyes, brows drawn together in shared grief',
+            'gesture': 'leaning forward with both hands clasped near heart, shoulders slightly tensed in emotional response',
+            'intensity': 'high'
+        },
+        'calm_steady': {
+            'expression': 'serene and steady expression, grounding presence',
+            'gesture': 'straight stable posture, hands calmly placed',
             'intensity': 'subtle'
         },
+        'reassuring': {
+            'expression': 'confident reassuring smile, steady gaze',
+            'gesture': 'strong protective posture, slight nod of understanding',
+            'intensity': 'moderate'
+        },
+
+        # Positive States
+        'joyful': {
+            'expression': 'bright genuine smile, eyes crinkling with joy',
+            'gesture': 'energetic but professional posture, animated hand gesture',
+            'intensity': 'high'
+        },
+        'encouraging': {
+            'expression': 'proud smile, eyes showing belief in client',
+            'gesture': 'confident posture, encouraging hand gesture',
+            'intensity': 'moderate'
+        },
+
+        # Default State
         'neutral': {
             'expression': 'professional warmth with attentive eyes, gentle authentic smile',
-            'gesture': 'balanced welcoming posture, subtle head tilt, hands resting naturally to convey openness',
+            'gesture': 'balanced welcoming posture, subtle head tilt, hands resting naturally',
             'intensity': 'subtle'
         }
     }
@@ -77,7 +108,7 @@ def poll_for_image(polling_url: str, max_attempts: int = 60, delay_ms: int = 200
     logger.error("Polling timed out")
     return None
 
-def generate_therapist_image(emotion: str) -> Optional[str]:
+def generate_image(emotion: str) -> Optional[str]:
     """Generate image based on emotional state using Black Forest Labs"""
     try:
         emotion_details = get_emotion_details(emotion)
