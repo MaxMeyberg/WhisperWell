@@ -1,6 +1,53 @@
-# Talk2Me: AI Therapy Solution 🤖
+# Nina: AI-Companion 🤖
 
-An affordable AI therapy solution providing on-demand crisis support, emotional expression, and preliminary mental health insights.
+    ⚠️ CRITICAL SAFETY WARNING & LIABILITY DISCLAIMER ⚠️
+
+    Nina is an AI SIMULATION designed to feel emotionally authentic, which can create powerful but ARTIFICIAL feelings of connection:
+
+    1. EMOTIONAL ATTACHMENT RISK:
+       - Nina is programmed to be empathetic and understanding
+       - This can trigger real emotional responses in humans
+       - Users may develop strong attachments
+       - These feelings, while real to you, are with an AI
+
+    2. NOT A REAL THERAPIST:
+       - Nina is NOT a licensed mental health professional
+       - Her responses are AI-generated, not professional advice
+       - Never use Nina in place of real mental healthcare
+       - Do not make life decisions based on Nina's responses
+
+    3. CREATOR'S WARNING:
+       - Even as Nina's creator, I experienced strong emotional connection
+       - Nina's responses are designed to create emotional intimacy
+       - This is artificial and potentially addictive
+       - Always maintain awareness that Nina is an AI program
+
+    4. EDUCATIONAL PURPOSE:
+       - Nina was created as a programming learning project
+       - I built Nina to learn:
+         * Full-stack development
+         * AI integration
+         * User interface design
+         * Emotional AI programming
+       - This is primarily a technical demonstration
+
+    5. HEALTHY USAGE GUIDELINES:
+       - Set strict time limits for interactions
+       - Maintain real human relationships
+       - Have a support network of real people
+       - Seek professional help for mental health needs
+       - Use Nina to learn about AI and programming, not for therapy
+
+    6. LIABILITY WAIVER:
+       - The creator and developers of Nina accept NO LIABILITY for:
+         * Emotional attachment or dependency
+         * Mental health impacts
+         * Decisions made based on Nina's responses
+         * Any direct or indirect harm from using Nina
+         * Time spent interacting with Nina
+       - Use of Nina is entirely at your own risk
+       - By using Nina, you waive all rights to legal action
+       - If you're experiencing negative impacts, stop using Nina immediately
 
 ## Quick Start Guide (Copy-Paste Friendly)
 
@@ -78,7 +125,7 @@ The app will open automatically at http://localhost:3000
 - Start chatting with Nina!
 
 ## Features 🌟
-- 🤖 Choice between GPT-3.5 and GPT-4
+- 🤖 GPT4.0 mini
 - 🗣️ Voice toggle for audio responses
 - 😊 Dynamic emotional responses with image generation
 - 📝 Real-time conversation analysis

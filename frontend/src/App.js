@@ -34,8 +34,7 @@ function App() {
   const [currentTherapistImage, setCurrentTherapistImage] = useState(therapistSmile);
   const [currentAnimation, setCurrentAnimation] = useState(null);
   const [imageKey, setImageKey] = useState(0);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('gpt-3.5');
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
 
   /**
@@ -61,16 +60,11 @@ function App() {
     try {
       const response = await fetch('http://127.0.0.1:5001/api/chat', {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        // This is the "data" variable in the chat(): inside of app.py
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           sessionId: 'default',
-          voiceEnabled: voiceEnabled,
-          model: selectedModel
+          voiceEnabled: voiceEnabled
         })
       });
 
@@ -139,46 +133,21 @@ function App() {
     <div className="app-container">
       <div className="image-box">
         <div className="therapist-image-frame">
-          {currentAnimation ? (
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              className="therapist-animation"
-              src={currentAnimation}
-            />
-          ) : (
-            <img 
-              key={imageKey}
-              src={currentTherapistImage} 
-              alt="AI Therapist"
-              className={`therapist-image ${isImageLoading ? 'loading' : ''}`}
-              onLoad={handleImageLoad}
-            />
-          )}
+          <img 
+            key={imageKey}
+            src={currentTherapistImage} 
+            alt="AI Therapist"
+            className={`therapist-image ${isImageLoading ? 'loading' : ''}`}
+            onLoad={handleImageLoad}
+          />
         </div>
         <div className="controls-container">
-          <div className="model-selector">
-            <select 
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="model-select"
-            >
-              <option value="gpt-3.5">GPT-3.5</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="claude-3.5">Claude 3.5</option>
-            </select>
-          </div>
           <div className="voice-toggle">
+            <span className="toggle-label">Voice</span>
             <label className="switch">
-              <input
-                type="checkbox"
-                checked={voiceEnabled}
-                onChange={(e) => setVoiceEnabled(e.target.checked)}
-              />
+              <input type="checkbox" checked={voiceEnabled} onChange={() => setVoiceEnabled(!voiceEnabled)} />
               <span className="slider round"></span>
             </label>
-            <span className="toggle-label">Voice {voiceEnabled ? 'On' : 'Off'}</span>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+from typing import Dict, Optional
 from .ai_utils import get_ai_response #allows for GPT API calls
 import logging #allows us to log into console
 
@@ -21,17 +22,34 @@ Can be configured with different levels (debug, info, warning, error)
 
 logger = logging.getLogger(__name__) #confirms we can log 
 
-def analyze_emotional_context(chatHistory) -> str:
+def analyze_emotional_context(chatHistory) -> Dict[str, str]:
     """
     End Game TODO: Add in stuff like reall bad trauam like murder, grape, etc.
-    emotionMap is ranked by priority, so trauma is highest priority
+    Analyzes chat and returns emotion details for image generation
     """
     
     emotion_prompt = [
-        {"role": "system", "content": "You are a companion named Nina, and you are given a conversation between a user and you. Analyze the conversation and determine the most emotional context for the user's message. explain the emotion and body language in great detail as this will be used to generate an image. Use Dark Triad Psychology to determine the emotion."},
-        *chatHistory #the * is for Chat GPT to like the format and look at the recent chat history (remove the system part)
+        {"role": "system", "content": """
+            You are Nina analyzing a conversation. Determine the emotional context and describe how you should appear.
+            Format your response EXACTLY as:
+            EMOTION: [single word emotion]
+            EXPRESSION: [facial expression details]
+            GESTURE: [body language details]
+            Keep descriptions natural and subtle - no exaggerated expressions.
+            """},
+        *chatHistory
     ]
-    emotion = get_ai_response(emotion_prompt)
-    print("Nina in emotional IQ: ", emotion)
-    return emotion
-  
+    
+    response = get_ai_response(emotion_prompt)
+    print("Nina in emotional IQ: ", response)
+    
+    # Parse response into dict
+    lines = response.split('\n')
+    emotion_dict = {}
+    for line in lines:
+        if 'EXPRESSION:' in line:
+            emotion_dict['expression'] = line.split('EXPRESSION:')[1].strip()
+        elif 'GESTURE:' in line:
+            emotion_dict['gesture'] = line.split('GESTURE:')[1].strip()
+    
+    return emotion_dict

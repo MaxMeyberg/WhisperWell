@@ -5,76 +5,109 @@ import base64
 from typing import Dict, Optional
 import logging
 import random
-from nina_thought_process import get_ai_response
+import time
 
 logger = logging.getLogger(__name__)
 
 BFL_API_KEY = os.getenv("BLACK_FOREST_API_KEY")
-BFL_API_URL = 'https://api.us1.bfl.ai/v1/flux-pro-1.1'
+BFL_API_URLS = { 'flux-pro-1.1-ultra': 'https://api.us1.bfl.ai/v1/flux-pro-1.1-ultra',
+                 'flux-pro-1.1': 'https://api.us1.bfl.ai/v1/flux-pro-1.1',
+                 'flux-pro': 'https://api.us1.bfl.ai/v1/flux-pro',
+                 'flux-dev': 'https://api.us1.bfl.ai/v1/flux-dev'}
+BFL_API_URL = BFL_API_URLS['flux-pro-1.1-ultra']
+
 REFERENCE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "assets/Therapist-F-Smile.png")
 
 
-def get_emotion_details(emotion: str, client=None) -> Dict[str, str]:
-    try:
-        prompt = [
-            {"role": "system", "content": """
-                You are an expert at describing subtle facial expressions and body language.
-                Given an emotion, describe how a professional female therapist named Nina should appear.
-                Focus ONLY on expression and gesture. Format as:
-                EXPRESSION: [facial details]
-                GESTURE: [body language details]
-                Keep descriptions natural and subtle - no exaggerated expressions.
-            """},
-            {"role": "user", "content": f"Describe Nina showing {emotion}"}
-        ]
-        
-        response = get_ai_response(prompt, client=client)
-        # Need to parse EXPRESSION and GESTURE from response
-        # Currently just returns raw response
-    except Exception as e:
-        logger.error(f"Failed to get emotion details: {str(e)}")
-        return emotion  # This returns str instead of Dict[str, str]
+# def poll_for_image(polling_url: str, max_attempts: int = 60, delay_ms: int = 2000) -> Optional[str]:
+#     """Poll for generated image"""
+#     headers = {
+#         'Content-Type': 'application/json',
+#         'X-Key': BFL_API_KEY
+#     }
+
+#     logger.info(f"Starting to poll: {polling_url}")
     
-    return response
+#     for attempt in range(max_attempts):
+#         try:
+#             response = requests.get(polling_url, headers=headers)
+#             data = response.json()
+            
+#             if attempt % 5 == 0:  # Log every 5th attempt
+#                 logger.info(f"Poll attempt {attempt + 1}: {data}")
+
+#             if data.get('status') == 'Ready' and data.get('result', {}).get('sample'):
+#                 logger.info("Successfully received generated image")
+#                 return data['result']['sample']
+                
+#             elif data.get('status') == 'Failed':
+#                 logger.error(f"Image generation failed: {data.get('details')}")
+#                 return None
+                
+#             time.sleep(delay_ms / 1000)
+            
+#         except Exception as e:
+#             logger.error(f"Polling error: {str(e)}")
+#             continue
+
+#     logger.error("Polling timed out")
+#     return None
 
 
-def poll_for_image(polling_url: str, max_attempts: int = 60, delay_ms: int = 2000) -> Optional[str]:
-    """Poll for generated image"""
-    headers = {
-        'Content-Type': 'application/json',
-        'X-Key': BFL_API_KEY
+#checks to see if image is ready
+def poll_for_image(polling_url):
+    """ (api_headers structure)
+    ENVELOPE (Headers):
+    To: BFL API Server
+    From: Our Application
+    Type: JSON Document
+    Authentication: Our API Key
+
+    LETTER CONTENT (Body):
+    {
+        actual data here...
     }
+    """
 
-    logger.info(f"Starting to poll: {polling_url}")
-    
-    for attempt in range(max_attempts):
-        try:
-            response = requests.get(polling_url, headers=headers)
-            data = response.json()
+    """ (letter content info):
+    Context-Type: application/json will have the following data
+    {
+    'id': 'd7624f0e-cc8d-40eb-aab8-b65b07c1ef67', 
+    'polling_url': 'https://api.us1.bfl.ai/v1/get_result?id=d7624f0e-cc8d-40eb-aab8-b65b07c1ef67'
+    }
+    """
+    # make empty envalope, BFL wants it this format
+    api_headers = {
+        'accept': 'application/json',
+        'x-key': BFL_API_KEY
+    }
+    logger.info("Sending request to BFL-API")
+    try:
+        while True:
+            time.sleep(0.5)
+            result = requests.get(polling_url, headers=api_headers).json()
             
-            if attempt % 5 == 0:  # Log every 5th attempt
-                logger.info(f"Poll attempt {attempt + 1}: {data}")
-
-            if data.get('status') == 'Ready' and data.get('result', {}).get('sample'):
+            if result.get("status") == 'Ready' and result.get('result', {}).get('sample'):
                 logger.info("Successfully received generated image")
-                return data['result']['sample']
+                return result['result']['sample']  # Actually return the URL!
+            else:
+                logger.debug(f"Status: {result.get('status')}")
                 
-            elif data.get('status') == 'Failed':
-                logger.error(f"Image generation failed: {data.get('details')}")
-                return None
-                
-            time.sleep(delay_ms / 1000)
-            
-        except Exception as e:
-            logger.error(f"Polling error: {str(e)}")
-            continue
-
-    logger.error("Polling timed out")
-    return None
+    except Exception as e:
+        logger.error(f"Error polling for image: {str(e)}")
+        return None
 
 
+
+
+"""CHECKPOINT: TODO: manually write generate image function """
+
+
+#TODO: generate image rewrite
 def generate_image(emotion: str, client=None) -> Optional[str]:
     """Generate image based on emotional state using Black Forest Labs"""
+
+    print("Image will generate on the following prompt:", emotion)
     try:
         if client is None:
             raise ValueError("OpenAI client not provided")
@@ -128,6 +161,7 @@ def generate_image(emotion: str, client=None) -> Optional[str]:
         }
 
         logger.info(f"Sending request to BFL API for emotion: {emotion} with seed: {random_seed}")
+        #change image quality here:
         response = requests.post(BFL_API_URL, json=params, headers=headers)
         
         if not response.ok:
@@ -148,3 +182,4 @@ def generate_image(emotion: str, client=None) -> Optional[str]:
     except Exception as e:
         logger.error(f"Image generation error: {str(e)}")
         return None
+    
