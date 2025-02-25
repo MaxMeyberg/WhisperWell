@@ -22,7 +22,7 @@ Can be configured with different levels (debug, info, warning, error)
 
 logger = logging.getLogger(__name__) #confirms we can log 
 
-def analyze_emotional_context(chatHistory) -> Dict[str, str]:
+def analyze_emotional_context(chatHistory, client=None) -> Dict[str, str]:
     """
     End Game TODO: Add in stuff like reall bad trauam like murder, grape, etc.
     Analyzes chat and returns emotion details for image generation
@@ -39,17 +39,21 @@ def analyze_emotional_context(chatHistory) -> Dict[str, str]:
             """},
         *chatHistory
     ]
-    
-    response = get_ai_response(emotion_prompt)
-    print("Nina in emotional IQ: ", response)
-    
-    # Parse response into dict
-    lines = response.split('\n')
-    emotion_dict = {}
-    for line in lines:
-        if 'EXPRESSION:' in line:
-            emotion_dict['expression'] = line.split('EXPRESSION:')[1].strip()
-        elif 'GESTURE:' in line:
-            emotion_dict['gesture'] = line.split('GESTURE:')[1].strip()
-    
-    return emotion_dict
+    #Nina wont run without the try/except
+    try:
+        response = get_ai_response(emotion_prompt, client=client)
+        print("Nina in emotional IQ: ", response)
+        
+        # Parse response into dict
+        lines = response.split('\n')
+        emotion_dict = {}
+        for line in lines:
+            if 'EXPRESSION:' in line:
+                emotion_dict['expression'] = line.split('EXPRESSION:')[1].strip()
+            elif 'GESTURE:' in line:
+                emotion_dict['gesture'] = line.split('GESTURE:')[1].strip()
+        
+        return emotion_dict
+    except Exception as e:
+        logger.error(f"Error in analyze_emotional_context: {e}")
+        return {}

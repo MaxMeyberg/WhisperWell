@@ -6,7 +6,6 @@ from mem0 import MemoryClient
 from dotenv import load_dotenv
 from nina_thought_process import ( get_ai_response, analyze_emotional_context, nina_personality)  # This works because of __init__.py, w.o init.oy we would need to imoort each of these 1 by 1.   
 import logging
-import requests
 from image_generation import generate_image
 from voice_generation import generate_speech
 from accounts import get_login, get_memories, add_memory
@@ -58,24 +57,6 @@ mem0_client = MemoryClient(api_key=os.environ['MEM0_API_KEY'])
 
 allChatHistory= {}
 PREVIOUS_EMOTION = 'neutral'  # Track previous emotional state
-
-# def get_ai_response(conversation, model="gpt-3.5"):
-#     try:
-#         if model == "gpt-4":
-#             response = open_ai_client.chat.completions.create(
-#                 model="gpt-4",
-#                 messages=conversation
-#             )
-#             return response.choices[0].message.content
-#         elif model == "gpt-3.5":
-#             response = open_ai_client.chat.completions.create(
-#                 model="gpt-3.5-turbo-0125",
-#                 messages=conversation
-#             )
-#             return response.choices[0].message.content
-#     except Exception as e:
-#         logger.error(f"AI response error for model {model}: {str(e)}")
-#         return f"Error with {model}: {str(e)}"
 
 def summarize_conversation(conversation):
     """Get a summary of the current conversation"""
@@ -198,8 +179,8 @@ def chat():
         chatHistory.append({"role": "assistant", "content": ninaResponse})
         log.zayin("Nina says: " + ninaResponse)
 
-        emotion = analyze_emotional_context(chatHistory)
-        image = generate_image(emotion, client=open_ai_client)
+        emotion = analyze_emotional_context(chatHistory, client=open_ai_client)
+        image = generate_image(emotion)
         #see if voice is enabled to turn on/off audio
         audioData = generate_speech(ninaResponse) if voiceEnabled else None
         #audioData is actually in Binary now, so to make it into actual text: we do this voodo stuff:
