@@ -13,6 +13,10 @@ node_modules
 # production
 /build
 */__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
 */build
 */progress
 

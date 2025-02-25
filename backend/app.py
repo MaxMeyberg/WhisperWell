@@ -4,12 +4,14 @@ from flask_cors import CORS
 import os
 from mem0 import MemoryClient
 from dotenv import load_dotenv
-from nina_thought_process import ( get_ai_response, analyze_emotional_context, nina_personality)  # This works because of __init__.py, w.o init.oy we would need to imoort each of these 1 by 1.   
 import logging
-from image_generation import generate_image
-from voice_generation import generate_speech
-from accounts import get_login, get_memories, add_memory
 import base64
+
+# Import services
+from services.chat_service import ChatService
+from services.image_service import ImageService
+from services.voice_service import VoiceService
+from services.memory_service import MemoryService
 
 # I love Lobotomy Corp, and I wanted to make the custom logger for fun
 class CustomLogger:
@@ -33,7 +35,8 @@ class CustomLogger:
 
 # Create our custom logger
 
-
+#TODO:Delete this after, we need to add more characters later
+character_id = 'nina'
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 log = CustomLogger(logger)
@@ -53,7 +56,20 @@ CORS(app, resources={
 load_dotenv()
 open_ai_client = OpenAI()  # It will automatically use OPENAI_API_KEY from environment
 mem0_client = MemoryClient(api_key=os.environ['MEM0_API_KEY'])
-
+"""TODO: make a new folder called "Setup which calls all API keys"""
+# Initialize services
+memory_service = MemoryService(api_key=os.getenv('MEM0_API_KEY'))
+chat_service = ChatService(
+    api_key=os.getenv('OPENAI_API_KEY'),
+    memory_service=memory_service
+)
+image_service = ImageService(
+    api_key=os.getenv('BLACK_FOREST_API_KEY'),
+    memory_service=memory_service
+)
+voice_service = VoiceService(
+    api_key=os.getenv('ELEVENLABS_API_KEY')
+)
 
 allChatHistory= {}
 PREVIOUS_EMOTION = 'neutral'  # Track previous emotional state
@@ -92,31 +108,30 @@ DONE: Manually write code for chat history
 #decorator designed to create a URL path to OPEN AI 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    #try is needed cause if the user sends a bad request, it will return an error
-    try: 
-        #"data" is from the App.js file, copy paste this text to see location:
-        data = request.json
-        """
-        body: JSON.stringify({
-        message: text,
+    try: #try is needed cause if the user sends a bad request, it will return an error      
+        data = request.json  #"data" is from the App.js file, copy paste this text to see location:
+        """JSON structure for OPEN AI (click for more info)
+        body: JSON.stringify(
+        {
+        currMessage: text,
         sessionId: 'default',
         voiceEnabled: voiceEnabled,
-        model: selectedModel
         })
         """
-        currMessage =  data.get('message')
-        sessionId = data.get('sessionId') #TODO: USE THIS LATER WHEN MEM0 FULLY IMPLEMENTED
+        currMessage = data.get('message')
+        sessionId = data.get('sessionId')  #TODO: USE THIS LATER WHEN MEM0 FULLY IMPLEMENTED
         voiceEnabled = data.get('voiceEnabled')
-        currModel = data.get('model') #default is gpt-3.5
         
         #Empty message case
         if not currMessage:
-            """
+            """ (click) desc:
             HTTP Status Codes:
             200 = OK (Success)
             400 = Bad Request (Client Error)
             500 = Server Error
-            """
+
+            Long code:
+            --------------------------------[EXAMPLE]--------------------------------
             statusCode = 400
             #This will replace the "data" variable
             errorMessage = {"error": "No message provided"}
@@ -124,67 +139,23 @@ def chat():
             errorMessage = jsonify(errorMessage)
             #This will be delivered to the front end where JS can read it correctly
             return errorMessage, statusCode
-
-        #print in ternimal backend to see what the user likes, EX: voice, model, input text. The 3 lines mean same thing
-        logger.debug(f"Using {currModel}")
-        logger.debug(f"Voice Mode: {voiceEnabled}")
-        logger.debug(f"Nina heard you say: {currMessage}")
-
-        #A new session w Nina, runs this
-        if sessionId not in allChatHistory:
-            #get Nina's personality from the prompt.py
-            systemPrompt = nina_personality()
-            """ (click for more deets)
-            --------------------------------[CONCEPT]--------------------------------
-            We need to follow OPEN AI's API format, for GPT to read it
-
-            # 1. "system" - Instructions or context for the AI
-            {
-                "role": "system",
-                "content": "You are Nina, a 21-year-old therapist..."
-            }
-
-            # 2. "user" - What the human says
-            {
-                "role": "user", 
-                "content": "I feel sad today"
-            }
-
-            # 3. "assistant" - What Nina (AI) says
-            {
-                "role": "assistant",
-                "content": "I understand how you're feeling..."
-            }
-            --------------------------------[EXAMPLE]--------------------------------
-
-            Pattern in allChatHistory[sessionId]:
-            [
-                {"role": "system", "content": nina_personality()},
-                {"role": "user", "content": "I feel sad today"},
-                {"role": "assistant", "content": "I hear you..."},
-                {"role": "user", "content": "my parrot died"},
-                {"role": "assistant", "content": "Awww, it hurts to lose a pet. I recently lost my hamster..."},
-            ]
-
+            
             """
-            allChatHistory[sessionId] = [{"role": "system", "content": systemPrompt}]
+            return jsonify({"error": "No message provided"}), 400
+    
+        # Use services for chat, emotion, and image generation
+        ninaResponse, chatHistory = chat_service.handle_chat(
+            currMessage, sessionId, voiceEnabled
+        )
+        emotion = chat_service.analyze_emotional_context(chatHistory)
+        image = image_service.generate_image(emotion, character_id='nina')
         
-        #Register chat History 
-        allChatHistory[sessionId].append({"role": "user", "content": currMessage})
-        #register the chat history for this current talk with Nina
-        chatHistory = allChatHistory[sessionId]
-        #send chatHistory to OPEN AI w get_ai_response, also takes care of what type of model to use
-        ninaResponse = get_ai_response(chatHistory, client=open_ai_client)
-        #add nina's response to the chat history
-        chatHistory.append({"role": "assistant", "content": ninaResponse})
-        log.zayin("Nina says: " + ninaResponse)
-
-        emotion = analyze_emotional_context(chatHistory, client=open_ai_client)
-        image = generate_image(emotion)
-        #see if voice is enabled to turn on/off audio
-        audioData = generate_speech(ninaResponse) if voiceEnabled else None
-        #audioData is actually in Binary now, so to make it into actual text: we do this voodo stuff:
-        audioData = base64.b64encode(audioData).decode('utf-8') if audioData != None else None
+        # Only generate voice if enabled
+        audioData = None
+        if voiceEnabled:
+            audioData = voice_service.generate_speech(ninaResponse)
+            if audioData:
+                audioData = base64.b64encode(audioData).decode('utf-8')
 
         #Deliver all the info the front end
         return jsonify({
@@ -198,9 +169,6 @@ def chat():
     except Exception as e:
         log.he(f"Chat endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-
-
 
 @app.route('/api/speech', methods=['POST'])
 def generate_speech_endpoint():
