@@ -13,33 +13,10 @@ from services.image_service import ImageService
 from services.voice_service import VoiceService
 from services.memory_service import MemoryService
 
-# I love Lobotomy Corp, and I wanted to make the custom logger for fun
-class CustomLogger:
-    def __init__(self, logger):
-        self.logger = logger
-    
-    def zayin(self, message):      # Instead of debug
-        self.logger.debug(message)
-    
-    def teth(self, message):       # Instead of info
-        self.logger.info(message)
-    
-    def he(self, message):       # Instead of warning
-        self.logger.warning(message)
-    
-    def waw(self, message):       # Instead of error
-        self.logger.error(message)
-    
-    def aleph(self, message):        # Instead of critical
-        self.logger.critical(message)
-
-# Create our custom logger
-
 #TODO:Delete this after, we need to add more characters later
 character_id = 'nina'
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-log = CustomLogger(logger)
 
 #Flask is The messenger that lets the front end back end communicate w each other. PRAISE FLASK
 app = Flask(__name__)
@@ -55,17 +32,13 @@ CORS(app, resources={
 # Initialize both clients
 load_dotenv()
 open_ai_client = OpenAI()  # It will automatically use OPENAI_API_KEY from environment
-mem0_client = MemoryClient(api_key=os.environ['MEM0_API_KEY'])
 """TODO: make a new folder called "Setup which calls all API keys"""
 # Initialize services
-memory_service = MemoryService(api_key=os.getenv('MEM0_API_KEY'))
 chat_service = ChatService(
     api_key=os.getenv('OPENAI_API_KEY'),
-    memory_service=memory_service
 )
 image_service = ImageService(
     api_key=os.getenv('BLACK_FOREST_API_KEY'),
-    memory_service=memory_service
 )
 voice_service = VoiceService(
     api_key=os.getenv('ELEVENLABS_API_KEY')
@@ -74,53 +47,27 @@ voice_service = VoiceService(
 allChatHistory= {}
 PREVIOUS_EMOTION = 'neutral'  # Track previous emotional state
 
-def summarize_conversation(conversation):
-    """Get a summary of the current conversation"""
-    summary_prompt = [
-        {"role": "system", "content": "Summarize the key points of this conversation, focusing on important information about the user."},
-        *conversation
-    ]
-    
-    summary = get_ai_response(summary_prompt, client=open_ai_client)
-    return summary
-
-def get_running_summary(conversation):
-    """Get a concise running summary of the conversation"""
-    summary_prompt = [
-        {"role": "system", "content": """
-            Maintain a very concise running summary of the key points about the user. 
-            Focus on facts, preferences, and important context.
-            Format as bullet points.
-            Keep only the most relevant information.
-            Limit to 3-5 bullet points.
-        """},
-        *conversation
-    ]
-    
-    summary = get_ai_response(summary_prompt, client=open_ai_client)
-    return summary
-
-
 """
 DONE: Manually write code for chat history
 """
 #structure of the 
 #decorator designed to create a URL path to OPEN AI 
 @app.route('/api/chat', methods=['POST'])
-def chat():
-    try: #try is needed cause if the user sends a bad request, it will return an error      
-        data = request.json  #"data" is from the App.js file, copy paste this text to see location:
-        """JSON structure for OPEN AI (click for more info)
-        body: JSON.stringify(
-        {
-        currMessage: text,
-        sessionId: 'default',
-        voiceEnabled: voiceEnabled,
-        })
-        """
+def chat_endpoint():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "no data from memories"}), 400
+            
         currMessage = data.get('message')
         sessionId = data.get('sessionId')  #TODO: USE THIS LATER WHEN MEM0 FULLY IMPLEMENTED
         voiceEnabled = data.get('voiceEnabled')
+        character_id = data.get('character')
+        
+        # defaults to nina when a invalid character ID occurs
+        if not character_id or character_id not in ["nina", "harold"]:
+            logger.warning(f"Invalid character_id: {character_id}, defaulting to nina")
+            character_id = "nina"
         
         #Empty message case
         if not currMessage:
@@ -145,15 +92,16 @@ def chat():
     
         # Use services for chat, emotion, and image generation
         ninaResponse, chatHistory = chat_service.handle_chat(
-            currMessage, sessionId, voiceEnabled
+            currMessage, sessionId, character_id
         )
-        emotion = chat_service.analyze_emotional_context(chatHistory)
-        image = image_service.generate_image(emotion, character_id='nina')
+        #emotion is the variable which is a prompt describing the body language of the character
+        body_language = chat_service.analyze_body_language(chatHistory, character_id)
+        image = image_service.generate_image(body_language, character_id=character_id)
         
         # Only generate voice if enabled
         audioData = None
         if voiceEnabled:
-            audioData = voice_service.generate_speech(ninaResponse)
+            audioData = voice_service.generate_speech(ninaResponse, character_id)
             if audioData:
                 audioData = base64.b64encode(audioData).decode('utf-8')
 
@@ -167,91 +115,7 @@ def chat():
 
     #catch the error into "e"
     except Exception as e:
-        log.he(f"Chat endpoint error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/speech', methods=['POST'])
-def generate_speech_endpoint():
-    try:
-        data = request.json
-        if not data:
-            logger.error("No data provided in speech request")
-            return jsonify({"error": "No data provided"}), 400
-            
-        text = data.get('text')
-        if not text:
-            logger.error("No text provided in speech request")
-            return jsonify({"error": "No text provided"}), 400
-            
-        logger.info(f"Generating speech for text: {text[:50]}...")
-        audio_data = generate_speech(text)
-        
-        if not audio_data:
-            logger.error("Failed to generate speech")
-            return jsonify({"error": "Speech generation failed"}), 500
-            
-        # Convert audio data to base64 for frontend
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-        return jsonify({
-            "audio": audio_base64,
-            "format": "audio/mpeg"
-        })
-        
-    except Exception as e:
-        logger.error(f"Speech endpoint error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/test_memory', methods=['GET'])
-def test_memory():
-    try:
-        # Create test conversation
-        test_conversation = [
-            {"role": "user", "content": "Hi Nina, I'm vegetarian and I love cooking."},
-            {"role": "assistant", "content": "That's great! I'll remember that you're vegetarian. What kind of dishes do you like to cook?"}
-        ]
-        
-        # Add to memory
-        add_memory("test_user", test_conversation)
-        
-        # Test retrieving memory with different queries
-        veg_memories = get_memories("test_user", query="vegetarian")
-        cooking_memories = get_memories("test_user", query="cooking")
-        
-        return jsonify({
-            "status": "success",
-            "vegetarian_related": veg_memories,
-            "cooking_related": cooking_memories,
-            "all_memories": get_memories("test_user")
-        })
-        
-    except Exception as e:
-        logger.error(f"Memory test error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/end_session', methods=['POST'])
-def end_session():
-    """Save session summary to long-term memory"""
-    try:
-        data = request.json
-        sessionId = data.get('sessionId', 'default')
-        
-        if sessionId in allChatHistory:
-            # Get final summary of the session
-            session_summary = summarize_conversation(allChatHistory[sessionId])
-            
-            # Save to long-term memory
-            add_memory(sessionId, [{
-                "role": "system",
-                "content": f"Session Summary: {session_summary}"
-            }])
-            
-            # Clear the session
-            del allChatHistory[sessionId]
-            
-            return jsonify({"status": "success", "summary": session_summary})
-            
-    except Exception as e:
-        logger.error(f"End session error: {str(e)}")
+        logger.warning(f"Chat endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

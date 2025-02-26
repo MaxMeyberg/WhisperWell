@@ -16,7 +16,9 @@ import {
   ConversationHeader,
 } from "@chatscope/chat-ui-kit-react";
 import "./App.css";
-import therapistSmile from './assets/therapist/Therapist-F-Smile.png';
+import ninaImage from './assets/Nina.png';
+import haroldImage from './assets/Harold.png';
+import SettingsMenu from './components/SettingsMenu';
 
 /**
  * Main application component that renders the chat interface
@@ -31,11 +33,12 @@ function App() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [currentTherapistImage, setCurrentTherapistImage] = useState(therapistSmile);
-  const [currentAnimation, setCurrentAnimation] = useState(null);
+  const [currImage, setCurrImage] = useState(ninaImage);
   const [imageKey, setImageKey] = useState(0);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentCharacter, setCurrentCharacter] = useState('nina');
 
   /**
    * Handles sending messages to the backend server and updating the chat UI.
@@ -64,7 +67,8 @@ function App() {
         body: JSON.stringify({
           message: text,
           sessionId: 'default',
-          voiceEnabled: voiceEnabled
+          voiceEnabled: voiceEnabled,
+          character: currentCharacter
         })
       });
 
@@ -76,7 +80,7 @@ function App() {
       
       // Update image immediately when we get response
       if (data.therapistImage) {
-        setCurrentTherapistImage(data.therapistImage);
+        setCurrImage(data.therapistImage);
         setImageKey(prev => prev + 1);
       }
 
@@ -129,26 +133,57 @@ function App() {
     });
   };
 
+  const handleModelChange = (newModel) => {
+    console.log(`Switched to ${newModel} model`);
+    // You could update UI or state here
+  };
+
+  const handleCharacterChange = (characterId) => {
+    setCurrentCharacter(characterId);
+    // Update the displayed image based on selected character
+    setCurrImage(characterId === 'nina' ? ninaImage : haroldImage);
+    
+    // Reset chat when character changes
+    setMessages([
+      { 
+        message: characterId === 'nina' 
+          ? "Hey, I'm Nina, I'm here to listen to whatever is on your mind!" 
+          : "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges.",
+        sender: "bot" 
+      },
+    ]);
+  };
+
   return (
     <div className="app-container">
+      {/* Settings Button */}
+      <button 
+        className="settings-button"
+        onClick={() => setIsSettingsOpen(true)}
+      >
+        ⚙️
+      </button>
+
+      {/* Settings Menu */}
+      <SettingsMenu
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        voiceEnabled={voiceEnabled}
+        onVoiceToggle={() => setVoiceEnabled(!voiceEnabled)}
+        onModelChange={handleModelChange}
+        currentCharacter={currentCharacter}
+        onCharacterChange={handleCharacterChange}
+      />
+
       <div className="image-box">
         <div className="therapist-image-frame">
           <img 
             key={imageKey}
-            src={currentTherapistImage} 
+            src={currImage} 
             alt="AI Therapist"
             className={`therapist-image ${isImageLoading ? 'loading' : ''}`}
             onLoad={handleImageLoad}
           />
-        </div>
-        <div className="controls-container">
-          <div className="voice-toggle">
-            <span className="toggle-label">Voice</span>
-            <label className="switch">
-              <input type="checkbox" checked={voiceEnabled} onChange={() => setVoiceEnabled(!voiceEnabled)} />
-              <span className="slider round"></span>
-            </label>
-          </div>
         </div>
       </div>
       <div className="chat-window">
@@ -173,7 +208,7 @@ function App() {
                     position: "single"
                   }}
                 >
-                  <Message.Header sender={msg.sender === "bot" ? "Nina" : "You"} />
+                  <Message.Header sender={msg.sender === "bot" ? currentCharacter === "nina" ? "Nina" : "Harold" : "You"} />
                 </Message>
               ))}
             </MessageList>
