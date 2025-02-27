@@ -26,7 +26,8 @@ class VoiceService:
                 logger.error("Missing ELEVENLABS_API_KEY environment variable")
                 return None
                 
-            if not self.voice_id:
+            voice_id = self.voice_ids.get(character_id)
+            if not voice_id:
                 logger.error("Missing ELEVENLABS_VOICE_ID environment variable")
                 return None
 
@@ -73,7 +74,7 @@ class VoiceService:
             5. Frontend plays the audio
             """
 
-            url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice_id}/stream"
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
             
             headers = {
                 'Accept': 'audio/mpeg',
@@ -90,7 +91,6 @@ class VoiceService:
             if len(text) > 5000:
                 logger.warning("Text too long, truncating to 5000 characters")
                 text = text[:5000]
-            voice_id = self.voice_ids.get(character_id, self.voice_ids["nina"])
             data = {
                 "voice_id": voice_id,
                 "text": text,

@@ -28,17 +28,29 @@ import SettingsMenu from './components/SettingsMenu';
  * @returns {JSX.Element} The rendered chat interface
  */
 function App() {
+  // Core state
   const [messages, setMessages] = useState([
     { message: "Hey, I'm Nina, I'm here to listen to whatever is on your mind!", sender: "bot" },
   ]);
+  
+  // UI state
   const [isTyping, setIsTyping] = useState(false);
-  const [isImageLoading, setIsImageLoading] = useState(false);
-  const [currImage, setCurrImage] = useState(ninaImage);
-  const [imageKey, setImageKey] = useState(0);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Character & image state
   const [currentCharacter, setCurrentCharacter] = useState('nina');
+  const [currImage, setCurrImage] = useState(ninaImage);
+  const [imageKey, setImageKey] = useState(0);
+  
+  // Settings
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+  // Welcome messages for each character
+  const welcomeMessages = {
+    nina: "Hey, I'm Nina, I'm here to listen to whatever is on your mind!",
+    harold: "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges."
+  };
 
   /**
    * Handles sending messages to the backend server and updating the chat UI.
@@ -47,110 +59,84 @@ function App() {
    * @returns {Promise<void>}
    */
   const handleSend = async (text) => {
-    if (isResponding) {
-      return;
-    }
+    // Skip if already responding or empty message
+    if (isResponding || !text.trim()) return;
     
-    if (!text.trim()) return;
-
+    // Add user message to chat
     const newMessage = { message: text, sender: "user", timestamp: new Date() };
     setMessages([...messages, newMessage]);
     
+    // Set loading states
     setIsResponding(true);
     setIsTyping(true);
-    setIsImageLoading(true);
-
+    
     try {
+      // Send to backend
       const response = await fetch('http://127.0.0.1:5001/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           sessionId: 'default',
-          voiceEnabled: voiceEnabled,
+          voiceEnabled,
           character: currentCharacter
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       
-      // Update image immediately when we get response
+      // Update therapist image
       if (data.therapistImage) {
         setCurrImage(data.therapistImage);
         setImageKey(prev => prev + 1);
       }
 
-      // Start audio immediately if voice is enabled
+      // Handle audio if enabled
       if (data.audioData) {
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(data.audioData), c => c.charCodeAt(0))],
-          { type: 'audio/mpeg' }
-        );
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        
-        // Play immediately
-        audio.play().catch(e => console.error("Audio playback error:", e));
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-          setIsResponding(false);
-        };
+        playAudio(data.audioData);
+      } else {
+        setIsResponding(false);
       }
 
-      // Show Nina's message immediately
+      // Add bot message
       setMessages(prev => [
         ...prev,
         { message: data.message, sender: "bot", timestamp: new Date() }
       ]);
       
-      // If no voice, allow new messages immediately
-      if (!voiceEnabled) {
-        setIsResponding(false);
-      }
-
     } catch (error) {
       console.error("Error:", error);
       setIsResponding(false);
     } finally {
       setIsTyping(false);
-      setIsImageLoading(false);
     }
   };
 
-  // Add image load handler
-  const handleImageLoad = (e) => {
-    console.log('New therapist image loaded:', {
-      dimensions: {
-        width: e.target.naturalWidth,
-        height: e.target.naturalHeight
-      },
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  const handleModelChange = (newModel) => {
-    console.log(`Switched to ${newModel} model`);
-    // You could update UI or state here
+  // Helper to play audio data
+  const playAudio = (audioData) => {
+    const audioBlob = new Blob(
+      [Uint8Array.from(atob(audioData), c => c.charCodeAt(0))],
+      { type: 'audio/mpeg' }
+    );
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    
+    audio.play().catch(e => console.error("Audio playback error:", e));
+    
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      setIsResponding(false);
+    };
   };
 
   const handleCharacterChange = (characterId) => {
     setCurrentCharacter(characterId);
-    // Update the displayed image based on selected character
     setCurrImage(characterId === 'nina' ? ninaImage : haroldImage);
     
-    // Reset chat when character changes
+    // Reset chat with appropriate welcome message
     setMessages([
-      { 
-        message: characterId === 'nina' 
-          ? "Hey, I'm Nina, I'm here to listen to whatever is on your mind!" 
-          : "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges.",
-        sender: "bot" 
-      },
+      { message: welcomeMessages[characterId], sender: "bot" }
     ]);
   };
 
@@ -170,33 +156,29 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         voiceEnabled={voiceEnabled}
         onVoiceToggle={() => setVoiceEnabled(!voiceEnabled)}
-        onModelChange={handleModelChange}
+        onModelChange={(model) => console.log(`Switched to ${model} model`)}
         currentCharacter={currentCharacter}
         onCharacterChange={handleCharacterChange}
       />
 
       <div className="image-box">
-        <div className="therapist-image-frame">
-          <img 
-            key={imageKey}
-            src={currImage} 
-            alt="AI Therapist"
-            className={`therapist-image ${isImageLoading ? 'loading' : ''}`}
-            onLoad={handleImageLoad}
-          />
-        </div>
+        <img 
+          key={imageKey}
+          src={currImage} 
+          alt="AI Therapist"
+          className="therapist-image"
+        />
       </div>
+      
       <div className="chat-window">
         <MainContainer>
           <ChatContainer>
             <ConversationHeader>
-              <ConversationHeader.Content 
-                userName="Talk2Me"
-              />
+              <ConversationHeader.Content userName="Emotion Well" />
             </ConversationHeader>
+            
             <MessageList 
               typingIndicator={isTyping ? <TypingIndicator content="Lemme think this through..." /> : null}
-              className="message-list"
             >
               {messages.map((msg, i) => (
                 <Message 
@@ -208,19 +190,23 @@ function App() {
                     position: "single"
                   }}
                 >
-                  <Message.Header sender={msg.sender === "bot" ? currentCharacter === "nina" ? "Nina" : "Harold" : "You"} />
+                  <Message.Header sender={msg.sender === "bot" ? 
+                    (currentCharacter === "nina" ? "Nina" : "Harold") : "You"} 
+                  />
                 </Message>
               ))}
             </MessageList>
+            
             <MessageInput 
               placeholder="Type your message here..."
               onSend={handleSend}
               attachButton={false}
-              className="message-input"
+              disabled={isResponding}
             />
           </ChatContainer>
         </MainContainer>
       </div>
+      
       {isResponding && (
         <div className="nina-typing-indicator">
           <span>...</span>
