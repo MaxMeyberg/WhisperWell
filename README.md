@@ -55,7 +55,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/winsonc7/CS224G.git
+git clone https://github.com/MaxMeyberg/AI_Therapist-Nina.git
 
 # Navigate to project folder
 cd CS224G
@@ -134,10 +134,9 @@ The app will open automatically at http://localhost:3000
 
 ## Development 👩‍💻
 
-Info on general sprint progress and individual contributions are in the `progress` folder.
-
-[Link to Sprint 2 progress and contributions](https://github.com/winsonc7/CS224G/blob/main/progress/SPRINT_TWO.md)
-
+- Working to find a way to recognuze facial expressions
+- Multiple avatars
+  
 # Run our Multimodal Agent Prototype ⚙️:
 
 We experiment with new prompts, features, etc. using our terminal prototype in the `prototype` folder. Our latest experiments feature
