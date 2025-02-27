@@ -9,8 +9,8 @@ class VoiceService:
         self.api_url = "https://api.elevenlabs.io/v1/text-to-speech"
         # Add multiple voice IDs for characters
         self.voice_ids = {
-            "nina": "21m00Tcm4TlvDq8ikWAM",  # Replace with actual voice ID for Nina
-            "harold": "pNInz6obpgDQGcFmaJgB"  # Replace with actual elderly male voice ID
+            "nina": "m7dvBJNSAB0scDjhPYgk",  # Replace with actual voice ID for Nina
+            "harold": "NOpBlnGInO9m6vDvFkFC"  # Replace with actual elderly male voice ID
         }
         self.headers = {
             "Accept": "audio/mpeg",
