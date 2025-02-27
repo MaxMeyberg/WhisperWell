@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 class VoiceService:
     def __init__(self, api_key):
         self.api_key = api_key
-        self.api_url = "https://api.elevenlabs.io/v1/text-to-speech"
+        self.api_url = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         # Add multiple voice IDs for characters
         self.voice_ids = {
             "nina": "m7dvBJNSAB0scDjhPYgk",  # Replace with actual voice ID for Nina
@@ -28,8 +28,10 @@ class VoiceService:
                 
             voice_id = self.voice_ids.get(character_id)
             if not voice_id:
-                logger.error("Missing ELEVENLABS_VOICE_ID environment variable")
+                logger.error(f"No voice ID configured for: {character_id}")
                 return None
+
+    
 
             """ (click for more deets)
             --------------------------------[CONCEPT]--------------------------------
@@ -74,7 +76,7 @@ class VoiceService:
             5. Frontend plays the audio
             """
 
-            url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
             
             headers = {
                 'Accept': 'audio/mpeg',
@@ -104,7 +106,7 @@ class VoiceService:
             }
 
             logger.info(f"Sending request to ElevenLabs API with text length: {len(text)}")
-            response = requests.post(self.api_url, headers=self.headers, json=data, timeout=30)
+            response = requests.post(url, headers=self.headers, json=data, timeout=30)
             
             if response.ok:
                 logger.info("Successfully generated speech")
