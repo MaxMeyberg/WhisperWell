@@ -118,6 +118,8 @@ class VoiceService:
             else:
                 logger.error(f"Speech generation failed: Status {response.status_code}")
                 logger.error(f"Response: {response.text}")
+                logger.error(f"Character: {character_id}, Voice ID: {voice_id}")
+                logger.error(f"Request URL: {url}")
                 return None
                 
         except requests.Timeout:
