@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Optional
-from openai import OpenAI
+import openai
 from prompt_engineering.personalities import get_personality_prompt, get_personality_description
 from prompt_engineering.image_gen import get_image_prompt
 
@@ -8,16 +8,13 @@ logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self, api_key):
-        self.client = OpenAI(api_key=api_key)
+        openai.api_key = api_key
         self.allChatHistory = {}  # Local memory only
         
-    def get_ai_response(self, chatHistory, client=None) -> Optional[str]:
+    def get_ai_response(self, chatHistory) -> Optional[str]:
         """Get response from OpenAI based on chat history"""
         try:
-            if client is None:
-                raise ValueError("OpenAI client not provided")
-                
-            response = client.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4-0125-preview",  # GPT-4 Turbo
                 messages=chatHistory
             )
@@ -62,7 +59,7 @@ class ChatService:
         ]
         
         try:
-            response = self.get_ai_response(emotion_prompt, client=self.client)
+            response = self.get_ai_response(emotion_prompt)
             print("Emotional Analysis:", response)  # For debugging
             
             # Parse response into dict for image generation
@@ -95,38 +92,6 @@ class ChatService:
             if character_session_id not in self.allChatHistory:
                 #get personality from the prompt.py
                 systemPrompt = get_personality_prompt(character_id)
-                """ (click for more deets)
-                --------------------------------[CONCEPT]--------------------------------
-                We need to follow OPEN AI's API format, for GPT to read it
-
-                # 1. "system" - Instructions or context for the AI
-                {
-                    "role": "system",
-                    "content": "You are Nina, a 21-year-old therapist..."
-                }
-
-                # 2. "user" - What the human says
-                {
-                    "role": "user", 
-                    "content": "I feel sad today"
-                }
-
-                # 3. "assistant" - What Nina (AI) says
-                {
-                    "role": "assistant",
-                    "content": "I understand how you're feeling..."
-                }
-                --------------------------------[EXAMPLE]--------------------------------
-
-                Pattern in allChatHistory[sessionId]:
-                [
-                    {"role": "system", "content": get_personality_prompt('nina')},
-                    {"role": "user", "content": "I feel sad today"},
-                    {"role": "assistant", "content": "I hear you..."},
-                    {"role": "user", "content": "my parrot died"},
-                    {"role": "assistant", "content": "Awww, it hurts to lose a pet. I recently lost my hamster..."},
-                ]
-                """
                 self.allChatHistory[character_session_id] = [
                     {"role": "system", "content": systemPrompt}
                 ]
@@ -139,7 +104,7 @@ class ChatService:
             chatHistory = self.allChatHistory[character_session_id]
             
             # send chatHistory to OPEN AI w get_ai_response
-            aiResponse = self.get_ai_response(chatHistory, client=self.client)
+            aiResponse = self.get_ai_response(chatHistory)
             
             # add nina's response to the chat history
             chatHistory.append(

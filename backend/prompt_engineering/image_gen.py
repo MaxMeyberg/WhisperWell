@@ -94,22 +94,24 @@ CHARACTERS = {
 
 def get_image_prompt(character_id, body_language):
     char = CHARACTERS.get(character_id, {})
-    base_prompt = char.get("base_prompt", "Person with neutral expression")
+    base_appearance = char.get("base_appearance", "Person with neutral expression")
     style_req = char.get("style_requirements", "Maintain consistent art style")
     
     expression = body_language.get('expression', 'neutral')
     gesture = body_language.get('gesture', 'standard pose')
     
     prompt = f"""
-    {base_prompt} with {expression}. {gesture}.
+    Character with the following EXACT features:
+    {base_appearance}
     
-    Maintain exact art style consistency:
+    Current Expression and Pose:
+    - Expression: {expression}
+    - Gesture/Pose: {gesture}
+    
+    Style Requirements:
     {style_req}
-    - Only change emotional expression
+    - Only change emotional expression and pose
     - Keep all core features identical to reference image
     """
     
     return prompt
-
-
-

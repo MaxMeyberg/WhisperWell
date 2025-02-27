@@ -1,4 +1,4 @@
-from openai import OpenAI
+import openai
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
@@ -29,7 +29,7 @@ CORS(app, resources={
 
 # Initialize both clients
 load_dotenv()
-open_ai_client = OpenAI()  # It will automatically use OPENAI_API_KEY from environment
+openai.api_key = os.getenv('OPENAI_API_KEY')
 """TODO: make a new folder called "Setup which calls all API keys"""
 # Initialize services
 chat_service = ChatService(
