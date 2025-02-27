@@ -1,8 +1,7 @@
 from openai import OpenAI
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from mem0 import MemoryClient
 from dotenv import load_dotenv
 import logging
 import base64
@@ -11,7 +10,6 @@ import base64
 from services.chat_service import ChatService
 from services.image_service import ImageService
 from services.voice_service import VoiceService
-from services.memory_service import MemoryService
 
 #TODO:Delete this after, we need to add more characters later
 character_id = 'nina'

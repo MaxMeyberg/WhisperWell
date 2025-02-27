@@ -111,7 +111,8 @@ class ImageService:
             # Fallback if no prompt was provided
             if not prompt:
                 logger.warning(f"No prompt provided for {character_id}, using default")
-                prompt = f"Portrait of {character_id} with neutral expression"
+                # Use the proper prompt generator with character info
+                prompt = get_image_prompt(character_id, {"expression": "neutral", "gesture": "relaxed"})
             
             # Get reference image
             reference_image = self.get_reference_image(character_id)

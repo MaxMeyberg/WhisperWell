@@ -1,9 +1,5 @@
 import logging
 import requests
-import os
-from typing import Optional
-import base64
-from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
