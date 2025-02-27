@@ -114,6 +114,9 @@ class ImageService:
                 # Use the proper prompt generator with character info
                 prompt = get_image_prompt(character_id, {"expression": "neutral", "gesture": "relaxed"})
             
+            # Ensure character is centered in the image
+            prompt = f"{prompt} Character positioned precisely in the center of the frame. Symmetrical composition. Head and shoulders centered."
+            
             # Get reference image
             reference_image = self.get_reference_image(character_id)
             
@@ -133,7 +136,7 @@ class ImageService:
             if reference_image:
                 request_data.update({
                     "reference_image": reference_image,
-                    "reference_weight": 0.85,  # Higher weight for more consistency
+                    "reference_weight": 0.8,  # Higher weight for more consistency
                     "seed": random.randint(1, 10000)
                 })
             
