@@ -140,7 +140,7 @@ class ImageService:
                     "seed": random.randint(1, 10000)
                 })
             
-            logger.info(f"Request data: {request_data}")
+            #logger.info(f"Request data: {request_data}")
             logger.info(f"API URL: {self.api_url}")
             logger.info(f"Headers: {self.api_headers}")
             

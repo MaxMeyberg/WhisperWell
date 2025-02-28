@@ -19,6 +19,7 @@ import "./App.css";
 import ninaImage from './assets/Nina.png';
 import haroldImage from './assets/Harold.png';
 import SettingsMenu from './components/SettingsMenu';
+import FaceDetector from './components/FaceDetector';
 
 /**
  * Main application component that renders the chat interface
@@ -45,6 +46,8 @@ function App() {
   
   // Settings
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [faceEnabled, setFaceEnabled] = useState(false);
+  const [userFace, setUserFace] = useState(null);
 
   // Welcome messages for each character
   const welcomeMessages = {
@@ -70,6 +73,9 @@ function App() {
     setIsResponding(true);
     setIsTyping(true);
     
+    // Capture face if enabled
+    let currentFace = userFace;
+    
     try {
       // Send to backend
       const response = await fetch('http://127.0.0.1:5001/api/chat', {
@@ -79,7 +85,8 @@ function App() {
           message: text,
           sessionId: 'default',
           voiceEnabled,
-          character: currentCharacter
+          character: currentCharacter,
+          userFace: faceEnabled ? currentFace : null
         })
       });
 
@@ -142,6 +149,12 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Face detector is now hidden */}
+      <FaceDetector 
+        onFaceUpdate={setUserFace} 
+        isEnabled={faceEnabled} 
+      />
+      
       {/* Settings Button */}
       <button 
         className="settings-button"
@@ -156,6 +169,8 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         voiceEnabled={voiceEnabled}
         onVoiceToggle={() => setVoiceEnabled(!voiceEnabled)}
+        faceEnabled={faceEnabled}
+        onFaceToggle={() => setFaceEnabled(!faceEnabled)}
         onModelChange={(model) => console.log(`Switched to ${model} model`)}
         currentCharacter={currentCharacter}
         onCharacterChange={handleCharacterChange}

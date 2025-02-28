@@ -1,53 +1,174 @@
+/* Backdrop for settings menu */
 .settings-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 998;
+    animation: fadeIn 0.2s ease-out;
 }
 
+/* Settings menu panel */
 .settings-menu {
     position: fixed;
     top: 0;
-    left: -300px; /* Start off-screen */
+    left: -300px;
     width: 300px;
     height: 100vh;
-    background: white;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    transition: left 0.3s ease;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     z-index: 999;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .settings-menu.open {
     left: 0;
 }
 
+/* Settings header */
 .settings-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.settings-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .close-button {
     background: none;
     border: none;
+    color: white;
     font-size: 24px;
     cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
 }
 
+.close-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Settings content */
 .settings-content {
     padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
+/* Individual setting items */
 .setting-item {
-    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 }
 
-/* Keep your existing switch styles */ 
+.setting-item span {
+    font-size: 16px;
+    color: #4b5563;
+}
+
+/* Dropdown selects */
+.setting-item select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #4b5563;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 140px;
+}
+
+.setting-item select:hover {
+    border-color: #8b5cf6;
+}
+
+.setting-item select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* Switch styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e7eb;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #8b5cf6;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #8b5cf6;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+} 

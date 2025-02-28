@@ -3,6 +3,24 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Mock MemoryClient since the real package isn't available yet
+class MemoryClient:
+    def __init__(self, **kwargs):
+        self.connected = False
+        print("Mock MemoryClient initialized")
+    
+    def create_memory(self, **kwargs):
+        print("Mock: Creating memory")
+        return {"id": "mock-memory-id"}
+    
+    def add_message(self, **kwargs):
+        print("Mock: Adding message")
+        return True
+    
+    def get_relevant_memories(self, **kwargs):
+        print("Mock: Getting relevant memories")
+        return []
+
 class MemoryService:
     def __init__(self, api_key=None):  # Made api_key optional since we're not using external service
         self.all_histories = {}  # Local cache

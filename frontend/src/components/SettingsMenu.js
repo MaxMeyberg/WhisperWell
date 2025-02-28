@@ -1,7 +1,7 @@
 import React from 'react';
 import './SettingsMenu.css';
 
-const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, onModelChange, currentCharacter, onCharacterChange }) => {
+const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, faceEnabled, onFaceToggle, onModelChange, currentCharacter, onCharacterChange }) => {
     const models = [
         { id: "ultra", name: "Ultra" },
         { id: "standard", name: "Standard" },
@@ -50,6 +50,19 @@ const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, onModelCha
                                 type="checkbox" 
                                 checked={voiceEnabled} 
                                 onChange={onVoiceToggle}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+
+                    {/* Face Toggle */}
+                    <div className="setting-item">
+                        <span>Face Recognition</span>
+                        <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                checked={faceEnabled} 
+                                onChange={onFaceToggle}
                             />
                             <span className="slider round"></span>
                         </label>

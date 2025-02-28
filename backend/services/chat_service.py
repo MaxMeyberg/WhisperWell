@@ -83,7 +83,7 @@ class ChatService:
             
             return {'final_prompt': f"Default {character_id} expression, neutral pose"}
 
-    def handle_chat(self, currMessage, sessionId, character_id):
+    def handle_chat(self, currMessage, sessionId, character_id, user_face = None):
         """Main chat handling method"""
         try:
             # Create a character-specific session ID to maintain separate histories
@@ -127,6 +127,14 @@ class ChatService:
                 self.allChatHistory[character_session_id] = [
                     {"role": "system", "content": systemPrompt}
                 ]
+            
+            # Add user emotion context if available
+            if user_face:
+                emotion_message = {
+                    "role": "system", 
+                    "content": f"The user appears to be feeling {user_face.get('emotion')} (confidence: {user_face.get('confidence', 0):.2f}). Take this into account in your response."
+                }
+                self.allChatHistory[character_session_id].append(emotion_message)
             
             # Register chat History 
             self.allChatHistory[character_session_id].append(
