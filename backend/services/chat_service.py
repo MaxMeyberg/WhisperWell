@@ -90,6 +90,38 @@ class ChatService:
             character_session_id = f"{sessionId}_{character_id}"
             
             if character_session_id not in self.allChatHistory:
+                """ (click for more deets)
+                --------------------------------[CONCEPT]--------------------------------
+                We need to follow OPEN AI's API format, for GPT to read it
+
+                # 1. "system" - Instructions or context for the AI
+                {
+                    "role": "system",
+                    "content": "You are Nina, a 21-year-old therapist..."
+                }
+
+                # 2. "user" - What the human says
+                {
+                    "role": "user", 
+                    "content": "I feel sad today"
+                }
+
+                # 3. "assistant" - What Nina (AI) says
+                {
+                    "role": "assistant",
+                    "content": "I understand how you're feeling..."
+                }
+                --------------------------------[EXAMPLE]--------------------------------
+
+                Pattern in allChatHistory[sessionId]:
+                [
+                    {"role": "system", "content": get_personality_prompt('nina')},
+                    {"role": "user", "content": "I feel sad today"},
+                    {"role": "assistant", "content": "I hear you..."},
+                    {"role": "user", "content": "my parrot died"},
+                    {"role": "assistant", "content": "Awww, it hurts to lose a pet. I recently lost my hamster..."},
+                ]
+                """
                 #get personality from the prompt.py
                 systemPrompt = get_personality_prompt(character_id)
                 self.allChatHistory[character_session_id] = [
