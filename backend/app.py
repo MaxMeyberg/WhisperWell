@@ -15,6 +15,8 @@ from services.voice_service import VoiceService #Elevenlabs
 from services.memory_service import MemoryService #Mem0 [IN PROGRESS]
 from services.camera_service import CameraService #Face recognition
 
+# Ensure logs directory exists
+os.makedirs('logs', exist_ok=True)
 
 #TODO:Delete this after, we need to add more characters later
 character_id = 'nina'
@@ -28,6 +30,7 @@ CORS(app, resources={
         "origins": ["http://localhost:3000"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
+        "expose_headers": ["Content-Type"],
         "supports_credentials": True
     }
 })

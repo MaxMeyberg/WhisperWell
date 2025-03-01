@@ -8,6 +8,7 @@ Grandma:
 
 CHARACTERS = {
     "nina": {
+        "base_prompt": "Young Asian-European woman therapist with dark brown bob cut, blue eyes, and black blazer",
         "base_appearance": """
         # Core Features (MUST remain exactly the same):
         - Exact same face shape and bone structure
@@ -49,6 +50,7 @@ CHARACTERS = {
         """
     },
     "harold": {
+        "base_prompt": "Elderly 72-year-old man with white hair, glasses, and distinguished facial features",
         "base_appearance": """
         # Core Features (MUST remain exactly the same):
         - Elderly man (72 years old) with dignified appearance
@@ -94,24 +96,22 @@ CHARACTERS = {
 
 def get_image_prompt(character_id, body_language):
     char = CHARACTERS.get(character_id, {})
-    base_appearance = char.get("base_appearance", "Person with neutral expression")
+    base_prompt = char.get("base_prompt", "Person with neutral expression")
     style_req = char.get("style_requirements", "Maintain consistent art style")
     
     expression = body_language.get('expression', 'neutral')
     gesture = body_language.get('gesture', 'standard pose')
     
     prompt = f"""
-    Character with the following EXACT features:
-    {base_appearance}
+    {base_prompt} with {expression}. {gesture}.
     
-    Current Expression and Pose:
-    - Expression: {expression}
-    - Gesture/Pose: {gesture}
-    
-    Style Requirements:
+    Maintain exact art style consistency:
     {style_req}
-    - Only change emotional expression and pose
+    - Only change emotional expression
     - Keep all core features identical to reference image
     """
     
     return prompt
+
+
+

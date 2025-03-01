@@ -21,12 +21,13 @@ class ImageService:
         """Get base64 encoded reference image for character"""
         # Load directly from file
         try:
-            # Standard path for character images
+            # get the image from the assets folder
             filename = f"{character_id.capitalize()}.png"
-            
             image_path = os.path.join(os.path.dirname(__file__), "..", "assets", filename)
             
+            # Check if the file exists
             if os.path.exists(image_path):
+                
                 with open(image_path, 'rb') as f:
                     image_bytes = f.read()
                     logger.info(f"Loaded reference image from file: {image_path}")

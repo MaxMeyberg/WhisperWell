@@ -10,6 +10,10 @@ def setup_loggers():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     
+    # Silence Werkzeug logs
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.WARNING)  # Only show warnings and errors
+    
     # Console handler for main application logs
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)

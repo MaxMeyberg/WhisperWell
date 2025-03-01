@@ -14,44 +14,48 @@ def format_emotion_data(line):
 
         # Format different types of emotion log entries
         if "Face detected - Dominant emotion:" in message:
-            # Extract emotion and confidence
-            match = re.search(r"emotion: (\w+) \(confidence: ([\d.]+)\)", message)
-            if match:
-                emotion, confidence = match.groups()
-                return f"\n{timestamp} 😊 EMOTION DETECTED:\n" \
-                       f"  Primary: {emotion.upper()} ({float(confidence)*100:.1f}%)\n"
-            
-        elif "All emotion scores:" in message:
-            return "  Detailed Scores:"
-            
-        elif message.strip().startswith(("happy:", "sad:", "angry:", "neutral:", "surprised:", "fear:", "disgust:")):
+            # Extract emotion
+            emotion = message.split(": ")[1].strip()
+            return f"\n{timestamp} 😊 EMOTION DETECTED:\n" \
+                   f"  Primary: {emotion}\n" \
+                   f"  Detailed Scores:\n"
+        
+        # Match emotion lines with leading spaces (e.g. "  happy: 0.95")
+        elif any(emotion in message for emotion in ["happy:", "sad:", "angry:", "neutral:", "surprised:", "fear:", "disgust:"]):
             # Format individual emotion scores
-            emotion, score = message.strip().split(": ")
-            score = float(score)
-            # Create a visual bar using Unicode blocks
-            bar = "█" * int(score * 20)  # Scale to 20 characters
-            return f"    {emotion:10} {score*100:5.1f}% |{bar}"
-            
+            parts = message.strip().split(": ")
+            if len(parts) == 2:
+                emotion, score = parts
+                # Remove INFO and any extra spaces
+                emotion = emotion.replace("INFO -", "").strip()
+                try:
+                    score = float(score)
+                    # Create a visual bar using Unicode blocks
+                    bar = "█" * int((score / 100) * 20)  # Scale to 20 characters
+                    return f"    {emotion:10} {score:5.1f}% |{bar}\n"
+                except ValueError:
+                    return None
+        
         elif "Using detected emotion:" in message:
             emotion = message.split(": ")[1]
-            return f"  ✓ CONFIRMED: Using {emotion}\n"
-            
+            return f"\n  ✓ CONFIRMED: Using {emotion}\n"
+        
         elif "Low confidence" in message:
             match = re.search(r"confidence \(([\d.]+)\) - Using previous emotion: (\w+)", message)
             if match:
                 conf, prev = match.groups()
                 return f"  ⚠ LOW CONFIDENCE: Falling back to previous emotion ({prev})\n"
-            
+        
         elif "Error in emotion detection:" in message:
             error = message.split(": ")[1]
             return f"\n{timestamp} ❌ ERROR: {error}\n"
-            
+        
         elif "Failed to decode image" in message:
             return f"\n{timestamp} ❌ ERROR: Failed to decode image\n"
-            
+        
         elif "Processing image for face detection" in message:
             return f"\n{timestamp} 🔍 Processing new image...\n"
-            
+        
         return None  # Skip other log entries
         
     except Exception as e:
