@@ -1,70 +1,155 @@
-# Getting Started with Create React App
+# WhisperWell - AI Emotion Detection
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An AI-powered application that detects and analyzes facial emotions in real-time.
 
-## Available Scripts
+## Mac Setup Guide
 
-In the project directory, you can run:
+### Prerequisites
 
-### `npm start`
+#### 1. Install Homebrew
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+#### 2. Install Python 3
+```bash
+brew install python
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+#### 3. Install Node.js and npm
+```bash
+brew install node
+```
 
-### `npm test`
+#### 4. Install Git (if not already installed)
+```bash
+brew install git
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Project Setup
 
-### `npm run build`
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/yourusername/AI_Therapist-Nina.git
+cd AI_Therapist-Nina
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### 2. Backend Setup
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Create logs directory for face detection
+mkdir -p logs
+touch logs/face_detection.log
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### 3. Frontend Setup
+```bash
+cd ../frontend
+npm install
+```
 
-### `npm run eject`
+### Running the Application
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+#### 1. Start the Backend Server
+In one terminal:
+```bash
+cd backend
+source venv/bin/activate
+python app.py
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### 2. Start the Face Detection Monitor
+In a second terminal:
+```bash
+cd backend
+source venv/bin/activate
+python -m dev_loggers.monitor_face_detection
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+#### 3. Start the Frontend
+In a third terminal:
+```bash
+cd frontend
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The application should now be running at http://localhost:3000
 
-## Learn More
+## Features
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Facial Emotion Detection**: Analyzes facial expressions in real-time
+- **Emotion Tracking**: Monitors changes in emotions over time
+- **Interactive UI**: User-friendly interface for emotion feedback
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Tech Stack
 
-### Code Splitting
+### Frontend
+- React.js
+- HTML/CSS
+- JavaScript
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Backend
+- Python 3
+- Flask (REST API)
+- OpenCV (Computer Vision)
+- DeepFace (Emotion Detection)
+- TensorFlow (Machine Learning)
 
-### Analyzing the Bundle Size
+## Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Camera Access
+- Make sure to grant camera permissions to your browser when prompted
+- If using Safari, ensure camera access is enabled in preferences
 
-### Making a Progressive Web App
+### Python Package Issues
+If you encounter issues with specific packages:
+```bash
+pip install opencv-python  # For OpenCV
+pip install deepface tensorflow  # For facial emotion detection
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Black Images in Face Detection
+If you see black images in face detection:
+- Ensure your webcam is working properly
+- Check that your browser has permission to access the camera
+- Try adjusting your lighting
 
-### Advanced Configuration
+### Emotion Detection Not Working
+If emotion detection isn't working:
+- Check the face detection log for errors: `backend/logs/face_detection.log`
+- Make sure your face is clearly visible in good lighting
+- Try restarting both the backend server and monitor
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Commands Reference
 
-### Deployment
+### Frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+# Start the React development server
+npm start
 
-### `npm run build` fails to minify
+# Create a production build
+npm run build
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# Run tests
+npm test
+```
+
+### Backend
+
+```bash
+# Start the Flask server
+python app.py
+
+# Start the emotion monitor
+python -m dev_loggers.monitor_face_detection
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
