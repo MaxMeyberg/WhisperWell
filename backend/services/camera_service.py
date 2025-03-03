@@ -85,43 +85,43 @@ class CameraService:
         
         return image_array
     
-    def _convert_numpy_types(self, obj):
-        """Helper method to convert numpy types to Python native types"""
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, dict):
-            return {k: self._convert_numpy_types(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._convert_numpy_types(item) for item in obj]
-        else:
-            return obj
+    """converts the numpyTypes into python types"""
+    def convert_numpy_types(self, obj):
+        # Integer
+        if isinstance(obj, np.integer): return int(obj)
+        # Float
+        if isinstance(obj, np.floating): return float(obj)
+        # List
+        if isinstance(obj, list): return [self.convert_numpy_types(item) for item in obj]
+        # Dict
+        if isinstance(obj, dict): return {k: self.convert_numpy_types(v) for k, v in obj.items()}
+        #NP array
+        if isinstance(obj, np.ndarray): return obj.tolist()
+        # everything else
+        return obj
         
-    def detect_face(self, image_data):
+    def detect_face(self, base64_img):
         """Detect emotion from image data (base64 string)"""
         try:
             # Step 1: Decode and detect faces
-            image = self.decode_base64_to_npArray(image_data)
-            if image is None:
+            image_npArr = self.decode_base64_to_npArray(base64_img)
+            if image_npArr is None:
                 return None
             
-            faces = self._locate_faces(image)
+            faces = self._locate_faces(image_npArr)
             
-            # Step 2: Create debug image
-            self._create_debug_image(image, faces)
-            
-            # Step 3: Analyze emotions with DeepFace
-            emotion_data = self._analyze_emotions(image)
+            # Step 2: Analyze emotions with DeepFace (SWAPPED ORDER)
+            emotion_data = self._analyze_emotions(image_npArr)
             if emotion_data is None:
                 return None
             
             dominant_emotion, confidence, emotion_scores = emotion_data
             
+            # Step 3: Create debug image with emotion info (SWAPPED ORDER)
+            self.green_box(image_npArr, faces, dominant_emotion, confidence)
+            
             # Step 4: Return results based on confidence
-            return self._prepare_emotion_response(dominant_emotion, confidence, emotion_scores)
+            return self._format_emotion_response(dominant_emotion, confidence, emotion_scores)
             
         except Exception as e:
             logger.error(f"Error in emotion detection: {e}")
@@ -139,22 +139,31 @@ class CameraService:
             minSize=(30, 30)
         )
 
-    def _create_debug_image(self, image, faces):
-        """Save debug image with faces marked and timestamp"""
-        # Create copy and add timestamp
-        debug_img = image.copy()
-        cv2.putText(debug_img, time.strftime("%H:%M:%S"), (10, 30), 
+    def green_box(self, img, faces, dom_emo=None, confidence=None):
+        """(click for deets) Why we make a copy
+        We wanna create a copy so we can scribble thie one with 
+        funny green boxes. And if we have the original one, 
+        it would make adding more features easier
+        """
+        
+        # Add timestamp
+        cv2.putText(img, time.strftime("%A:%D   Time(24H):%H:%M"), (10, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
-        # Draw rectangles for all detected faces
-        for face in faces:
-            x, y, w, h = face
-            cv2.rectangle(debug_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(debug_img, 'Face', (x, y-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        # For each face, draw green rectangle
+        for x, y, w, h in faces:
+            # Draw rectangle
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            
+            # Add emotion label if available
+            if dom_emo and confidence:
+                # the .0 in this is to say by the 0th decimal
+                label = f"{dom_emo} ({confidence:.1f}%)"
+                cv2.putText(img, label, (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         
-        # Save image
-        cv2.imwrite('logs/last_frame.jpg', debug_img)
+        # Save the result
+        cv2.imwrite('logs/last_frame.jpg', img)
 
     def _analyze_emotions(self, image):
         """Analyze emotions using DeepFace"""
@@ -212,7 +221,7 @@ class CameraService:
             for emotion, score in emotion_scores.items()
         }
 
-    def _prepare_emotion_response(self, dominant_emotion, confidence, emotion_scores):
+    def _format_emotion_response(self, dominant_emotion, confidence, emotion_scores):
         """Prepare the response based on confidence threshold"""
         # High confidence case
         if confidence >= self.confidence_threshold:

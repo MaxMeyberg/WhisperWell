@@ -6,7 +6,7 @@ import cv2 # this is the openCV library, like tf2, the cv2 is the good one
 import base64 #base 64 data is important because it converts text -> binary AND binary -> text
 import io #this is needed to convert image to binary (includes io.BytesIO) Also uses RAM
 import numpy as np # converts images to numpy arrays (They are Arrays in C that are faster)
-from deepface import Deepface #Works on emotion detection (Can do other stuff like face recognition)
+from deepface import DeepFace #Works on emotion detection (Can do other stuff like face recognition)
 from PIL import Image #Makes it so that the binary from images is digestible for numpy to convert into numpy arrays
 import json # Needed for JSON files (aka how to send to frontend)
 import tensorflow as tf # needed for deepface to actually work, Deepface isnt an API, its a library
@@ -85,46 +85,84 @@ class CameraService:
 
     """converts the numpyTypes into python types"""
     def convert_numpy_types(self, obj):
-        if isinstance(obj, np.integer): #integer
-            return int(obj)
-        if isinstance(obj, np.floating): #float
-            return float(obj)
-        if isinstance(obj, list): #list
-            return [self.convert_numpy_types(item) for item in obj]
-        if isinstance(obj, dict): #dictionary
-            return {k: self.convert_numpy_types(v) for k, v in obj.items()}
-        if isinstance(obj, np.ndarray): #numpy array
-            return obj.tolist()
+        # Integer
+        if isinstance(obj, np.integer): return int(obj)
+        # Float
+        if isinstance(obj, np.floating): return float(obj)
+        # List
+        if isinstance(obj, list): return [self.convert_numpy_types(item) for item in obj]
+        # Dict
+        if isinstance(obj, dict): return {k: self.convert_numpy_types(v) for k, v in obj.items()}
+        #NP array
+        if isinstance(obj, np.ndarray): return obj.tolist()
+        # everything else
         return obj
     
+    """
+    This function detects the face to check for emotions and returns the emotion chart (dom_emo, conf, and emo_Score)
+    """
     def detect_face(self, base64_img):
         try:
             # Step 1: decode to numpy array
             img_npArr = self.decode_base64_to_npArray(base64_img)
             if img_npArr is None: return None
 
-            # Step 2: detect faces
-            faces = self.detect_faces(img_npArr)
-            self.create_debug_img(img_npArr, faces)
-
-            # step 3: Analyize emotions w DeepFace
+            # Step 2: Analyze emotions w DeepFace (Shows the emotion scores, confidence and dom_emo)
             emotions = self.analyze_emotions(img_npArr)
             if emotions == None: return None
 
-            dom_emo, confidence, emo_scores = emotions
+            # Step 3: detect faces
+            faces = self.locate_faces(img_npArr)
 
-            # step4:  return confidence table
+            """(click for deets) on rough example
+            dom_emo: "happy" 
+            confidence: 0.83
+            emo_scores:{
+                "happy": 0.83,
+                "sad": 0.12,
+                "angry": 0.05,
+                "disgusted": 0.00,
+                "surprised": 0.00,
+                "fearful": 0.00,
+                "neutral": 0.00
+            }
+            """
+            dom_emo, conf, emo_scores = emotions
+            # Step 4: [DEVELOPER TOOL] Create the green recangle image, use copy to make future features easier to add
+            self.green_box(img_npArr.copy(), faces, dom_emo, conf)
+
+            # Step 5: return confidence table
             return self.prepare_emotion_response(emotions)
 
         except Exception as e:
             logger.error(f"Error in emotion detection: {e}")
-            logger.exception("Full error details:")
             return None
 
-    def locate_faces(self, image):
-
-
-"""CHECKPOINT"""
+    def green_box(self, img, faces, dom_emo=None, confidence=None):
+        """(click for deets) Why we make a copy
+        We wanna create a copy so we can scribble thie one with 
+        funny green boxes. And if we have the original one, 
+        it would make adding more features easier
+        """
+        
+        # Add timestamp
+        cv2.putText(img, time.strftime("%A:%D   Time(24H):%H:%M"), (10, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        # For each face, draw green rectangle
+        for x, y, w, h in faces:
+            # Draw rectangle
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            
+            # Add emotion label if available
+            if dom_emo and confidence:
+                # the .0 in this is to say by the 1st decimal
+                label = f"{dom_emo} ({confidence:.0f}%)"
+                cv2.putText(img, label, (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        
+        # Save the result
+        cv2.imwrite('logs/last_frame.jpg', img)
 
     """(click for deets)
     cv2.CascadeClassifier()
@@ -135,36 +173,13 @@ class CameraService:
     cv2.data.haarcascades  # Path to built-in OpenCV models
     + 'haarcascade_frontalface_default.xml'  # Specific face detection model
 
-    TLDR: Creates a detector that can find faces in an image
+    TLDR: Creates a detector that can find faces in an image, This is a pre-trained Model made in OpenCV, dont worry for now on complex ML stuff
     """
 
-    def _locate_faces(self, image):
-        """Locate faces in image using OpenCV"""
+    def locate_faces(self, image):
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        return face_cascade.detectMultiScale(
-            gray,
-            scaleFactor=1.3,
-            minNeighbors=5,
-            minSize=(30, 30)
-        )
-
-    def _create_debug_image(self, image, faces):
-        """Save debug image with faces marked and timestamp"""
-        # Create copy and add timestamp
-        debug_img = image.copy()
-        cv2.putText(debug_img, time.strftime("%H:%M:%S"), (10, 30), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        
-        # Draw rectangles for all detected faces
-        for face in faces:
-            x, y, w, h = face
-            cv2.rectangle(debug_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(debug_img, 'Face', (x, y-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-        
-        # Save image
-        cv2.imwrite('logs/last_frame.jpg', debug_img)
+        return face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
 
     def _analyze_emotions(self, image):
         """Analyze emotions using DeepFace"""
@@ -222,7 +237,7 @@ class CameraService:
             for emotion, score in emotion_scores.items()
         }
 
-    def _prepare_emotion_response(self, dominant_emotion, confidence, emotion_scores):
+    def _format_emotion_response(self, dominant_emotion, confidence, emotion_scores):
         """Prepare the response based on confidence threshold"""
         # High confidence case
         if confidence >= self.confidence_threshold:
