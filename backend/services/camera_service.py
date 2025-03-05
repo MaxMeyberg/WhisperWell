@@ -127,7 +127,7 @@ class CameraService:
             logger.error(f"Error in emotion detection: {e}")
             logger.exception("Full error details:")
             return None
-
+    
     def _locate_faces(self, image):
         """Locate faces in image using OpenCV"""
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')

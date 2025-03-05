@@ -189,7 +189,7 @@ class CameraService:
                 img_path=image, 
                 actions=['emotion'],
                 enforce_detection=False,
-                detector_backend='opencv',
+                detector_backend='mtcnn',
                 align=True
             )
             
