@@ -156,8 +156,8 @@ class CameraService:
             
             # Add emotion label if available
             if dom_emo and confidence:
-                # the .0 in this is to say by the 1st decimal
-                label = f"{dom_emo} ({confidence:.0f}%)"
+                # the .0 in this is to say by the 0th decimal
+                label = f"{dom_emo} ({confidence:.1f}%)"
                 cv2.putText(img, label, (x, y-10), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         
@@ -165,6 +165,7 @@ class CameraService:
         cv2.imwrite('logs/last_frame.jpg', img)
 
     """(click for deets)
+    TODO: Add mtcnn to be the new default 
     cv2.CascadeClassifier()
 
     This is an algorithm that uses patterns of light and dark regions to identify faces
@@ -175,9 +176,9 @@ class CameraService:
 
     TLDR: Creates a detector that can find faces in an image, This is a pre-trained Model made in OpenCV, dont worry for now on complex ML stuff
     """
-
     def locate_faces(self, image):
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        #quickly convert to grayscale so face detection is 3x faster,
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
 

@@ -1,110 +1,72 @@
-# WhisperWell AI Therapy Assistant
+# Nina AI Therapist
 
-WhisperWell is an AI-powered therapy assistant that uses facial recognition, voice synthesis, and natural language processing to provide an interactive therapy experience.
+An AI-powered emotion detection application that analyzes facial expressions in real-time and provides insights.
 
-## Features
+## Installation Guide
 
-- 🎭 Real-time emotion detection through facial recognition
-- 🗣️ Natural conversation with AI therapist characters
-- 🔊 Voice synthesis for spoken responses
-- 📝 Memory of conversation context
-- 🖼️ Dynamic character image generation based on conversation
+### Prerequisites
+- Python 3.9+ 
+- Node.js 16+ (for frontend)
+- Mac with M-series chip or Intel processor
 
-## Prerequisites
+### Backend Setup
 
-- Python 3.8 or higher
-- pip (Python package installer)
-- A webcam for facial recognition features
-- Modern web browser (Chrome, Firefox, Safari)
-
-## Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/MaxMeyberg/AI_Therapist-Nina.git
-   cd AI_Therapist-Nina
-   ```
-
-2. **Set Up Virtual Environment**
-   ```bash
-   # Create virtual environment
-   python -m venv venv
-
-   # Activate virtual environment
-   # On Windows:
-   # Never tested it on windows
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Environment Variables**
-   Create a `.env` file in the backend directory with your API keys:
-   ```
-   OPENAI_API_KEY=your_openai_key
-   ELEVENLABS_API_KEY=your_elevenlabs_key
-   BLACK_FOREST_API_KEY=your_black_forest_key
-   ```
-
-## Running the Application
-
-1. **Start the Backend Server**
+1. **Create and activate virtual environment**
    ```bash
    cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Update pip
+   pip install --upgrade pip
+
+   # For Mac M-series chips (M1/M2/M3):
+   pip install tensorflow-macos==2.16.2 
+
+   # For Intel/Windows/Linux:
+   # pip install tensorflow==2.16.2
+
+   # Install face detection packages
+   pip install mtcnn deepface opencv-python
+
+   # Install API packages
+   pip install flask flask-cors python-dotenv
+
+   # Install Keras compatibility
+   pip install tf-keras
+   ```
+
+3. **Verify installation**
+   ```bash
+   python -c "import cv2; import tensorflow as tf; import mtcnn; from deepface import DeepFace; print('Setup successful!')"
+   ```
+
+4. **Start the backend**
+   ```bash
    python app.py
    ```
-   The server will start on `http://localhost:5001`
 
-2. **Start the Frontend Development Server**
-   In a new terminal:
+### Frontend Setup
+
+1. **Install dependencies**
    ```bash
    cd frontend
    npm install
+   ```
+
+2. **Start development server**
+   ```bash
    npm start
    ```
-   The frontend will be available at `http://localhost:3000`
 
-3. **Monitor Face Detection Logs** (Optional)
-   In a new terminal:
-   ```bash
-   cd backend
-   python -m dev_loggers.monitor_face_detection
-   ```
-   You should see:
-   ```
-   === WhisperWell Face Detection Monitor ===
-   Monitoring facial expressions and emotions in real-time
-   Press Ctrl+C to exit
-   =============================================
-   ```
-   
-   When using the webcam, you'll see emotion detection logs like:
-   ```
-   2025-02-28 11:01:31 😊 EMOTION DETECTED:
-     Primary: HAPPY (85.0%)
-     Detailed Scores:
-       happy      85.0% |████████████████
-       neutral    10.0% |██
-       sad         2.0% |
-   ```
+## Troubleshooting
 
-   **Note:** 
-   - Face detection logs only appear in this monitor window
-   - The main application terminal stays clean
-   - Press `Ctrl+C` to stop monitoring
+- **ModuleNotFoundError for cv2**: Run `pip install opencv-python` in your activated venv
+- **TensorFlow version conflicts**: Use `pip uninstall -y tensorflow tensorflow-macos` then install the correct version for your system
+- **DeepFace errors**: Make sure tf-keras is installed with `pip install tf-keras`
 
-## Development Tools
-
-### Logging System
-
-The application uses a dedicated logging system for different components:
-
-- **Main Application Logs**: Shown in the main terminal
-- **Face Detection Logs**: Available in a separate monitoring window
-- Log files are stored in `backend/logs/`
-
-### Directory Structure
+## Development
+The project uses a Flask backend for face detection/emotion analysis and a React frontend for visualization.
