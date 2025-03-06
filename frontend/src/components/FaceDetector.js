@@ -35,61 +35,34 @@ const FaceDetector = ({ onFaceUpdate, isEnabled }) => {
     if (onFaceUpdate) onFaceUpdate(null);
   }, [onFaceUpdate]);
 
-  const detectFace = useCallback(async () => {
-    if (!isActive || !videoRef.current || !canvasRef.current) return;
-    
+  const captureAndSendImage = async () => {
     try {
       const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      
-      // Add timestamp to verify new frames
-      const timestamp = new Date().toISOString();
-      console.log(`Capturing new frame at: ${timestamp}`);
-      
-      // Capture frame from video
+      const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      console.log("Video ready state:", video.readyState);
-      console.log("Video dimensions:", video.videoWidth, "x", video.videoHeight);
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.getContext('2d').drawImage(video, 0, 0);
       
-      // Get image data to verify it's not black
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imageData.data;
-      const isBlack = pixels.every((val, i) => i % 4 === 3 || val === 0);
-      console.log("Frame is all black:", isBlack);
-      
-      // Log image dimensions
-      console.log("Face detection dimensions:", canvas.width, canvas.height);
-      
-      // Convert to base64
-      const imageDataBase64 = canvas.toDataURL('image/jpeg', 0.7);
-      // Log the first 100 characters of image data to verify it's not empty
-      console.log("Image data preview:", imageDataBase64.substring(0, 100));
-      console.log("Image data length:", imageDataBase64.length);
-      
-      console.log("Sending face detection request...");
-      const response = await fetch('http://127.0.0.1:5001/api/detect_face', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageDataBase64 })
-      });
-      
-      if (response.ok) {
+      // Get image as blob instead of base64
+      canvas.toBlob(async (blob) => {
+        // Create FormData
+        const formData = new FormData();
+        formData.append('image', blob, 'webcam.jpg');
+        
+        // Send to backend
+        const response = await fetch('http://localhost:5001/api/emotion-detection-binary', {
+          method: 'POST',
+          body: formData,  // No need to set Content-Type, browser sets it automatically
+        });
+        
         const data = await response.json();
-        console.log("Face detection response:", data);
+        // Handle response as before
         if (onFaceUpdate) onFaceUpdate(data);
-      }
+      }, 'image/jpeg');
     } catch (error) {
-      console.error("Face detection error details:", error);
-      // If the error persists, pause face detection
-      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-        console.log("Backend server may be down, pausing face detection");
-        setIsActive(false);
-      }
+      console.error('Error capturing image:', error);
     }
-  }, [isActive, videoRef, canvasRef, onFaceUpdate]);
+  };
 
   // Now use the functions in useEffect
   useEffect(() => {
@@ -105,13 +78,13 @@ const FaceDetector = ({ onFaceUpdate, isEnabled }) => {
     let timerId;
     if (isActive) {
       // Run face detection every 3 seconds
-      timerId = setInterval(detectFace, 3000);
+      timerId = setInterval(captureAndSendImage, 3000);
     }
     
     return () => {
       if (timerId) clearInterval(timerId);
     };
-  }, [isActive, detectFace]);
+  }, [isActive, captureAndSendImage]);
 
   return (
     <div className="face-detector" style={{ display: 'none' }}>

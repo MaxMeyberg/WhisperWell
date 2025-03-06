@@ -1,12 +1,7 @@
 import logging
 import cv2
-import base64
-import io
 import numpy as np
 from deepface import DeepFace
-from PIL import Image
-import json  # Add this for helper functions
-import tensorflow as tf  # Add this import
 import time
 
 # Get the dedicated camera logger
@@ -16,118 +11,53 @@ class CameraService:
     def __init__(self):
         self.previous_emotion = None
         self.confidence_threshold = 30  # Minimum confidence (30%) to report emotion
+        self.detector_backend = 'opencv'  # Default detector
+        self.available_backends = ['opencv', 'mtcnn', 'retinaface']
         
-        # List of valid emotions to check against
-        self.valid_emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
+        logger.info(f"Using face detector: {self.detector_backend}")
         
-        # Test TensorFlow installation
-        logger.info(f"TensorFlow version: {tf.__version__}")
-        logger.info("GPU Available: {}".format(
-            tf.config.list_physical_devices('GPU')
-        ))
-        
-    def decode_base64_to_npArray(self, base64_string):
-        """Convert base64 image to numpy array"""
+    def process_image(self, img_np):
+        """Process image directly with no encoding/decoding"""
         try:
-            # Step 1: Extract base64 data
-            clean_base64 = self._extract_base64_data(base64_string)
+            # Resize to standard size if needed
+            if img_np.shape[0] > 480 or img_np.shape[1] > 640:
+                img_np = cv2.resize(img_np, (640, 480))
             
-            # Step 2: Create image from binary data
-            image = self._create_image_from_base64(clean_base64)
-            if image is None:
-                return None
+            # Detect faces
+            faces = self._locate_faces(img_np)
             
-            # Step 3: Process and convert to numpy array
-            return self._convert_image_to_array(image)
-            
-        except Exception as e:
-            logger.error(f"Error decoding image: {e}")
-            return None
-        
-    def _extract_base64_data(self, base64_string):
-        """Extract the actual base64 data from various possible formats"""
-        # Remove data URL prefix if present
-        if ',' in base64_string:
-            base64_string = base64_string.split(',')[1]
-        return base64_string
-
-    def _create_image_from_base64(self, base64_string):
-        """Create a PIL image from base64 string"""
-        try:
-            # Decode base64 to binary
-            image_bytes = base64.b64decode(base64_string)
-            
-            # Create PIL Image
-            image = Image.open(io.BytesIO(image_bytes))
-            
-            # Convert to RGB if needed
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            
-            # Resize image to a reasonable size for face detection
-            image = image.resize((640, 480))
-            
-            # Log image details
-            logger.info(f"PIL Image mode: {image.mode}, size: {image.size}")
-            
-            return image
-        except Exception as e:
-            logger.error(f"Failed to create image from base64: {e}")
-            return None
-
-    def _convert_image_to_array(self, image):
-        """Convert PIL image to OpenCV-compatible numpy array"""
-        # Convert to numpy array
-        image_array = np.array(image)
-        
-        # PIL gives us RGB, OpenCV expects BGR
-        image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR).copy()
-        
-        return image_array
-    
-    """converts the numpyTypes into python types"""
-    def convert_numpy_types(self, obj):
-        # Integer
-        if isinstance(obj, np.integer): return int(obj)
-        # Float
-        if isinstance(obj, np.floating): return float(obj)
-        # List
-        if isinstance(obj, list): return [self.convert_numpy_types(item) for item in obj]
-        # Dict
-        if isinstance(obj, dict): return {k: self.convert_numpy_types(v) for k, v in obj.items()}
-        #NP array
-        if isinstance(obj, np.ndarray): return obj.tolist()
-        # everything else
-        return obj
-        
-    def detect_face(self, base64_img):
-        """Detect emotion from image data (base64 string)"""
-        try:
-            # Step 1: Decode and detect faces
-            image_npArr = self.decode_base64_to_npArray(base64_img)
-            if image_npArr is None:
-                return None
-            
-            faces = self._locate_faces(image_npArr)
-            
-            # Step 2: Analyze emotions with DeepFace (SWAPPED ORDER)
-            emotion_data = self._analyze_emotions(image_npArr)
+            # Analyze emotions
+            emotion_data = self._analyze_emotions(img_np)
             if emotion_data is None:
                 return None
             
             dominant_emotion, confidence, emotion_scores = emotion_data
             
-            # Step 3: Create debug image with emotion info (SWAPPED ORDER)
-            self.green_box(image_npArr, faces, dominant_emotion, confidence)
+            # Create debug image
+            self.green_box(img_np.copy(), faces, dominant_emotion, confidence)
             
-            # Step 4: Return results based on confidence
+            # Return the emotion data
             return self._format_emotion_response(dominant_emotion, confidence, emotion_scores)
             
         except Exception as e:
-            logger.error(f"Error in emotion detection: {e}")
-            logger.exception("Full error details:")
+            logger.error(f"Error processing image: {e}")
             return None
-    
+            
+    def detect_face_from_file(self, image_file):
+        """Process image from file upload"""
+        try:
+            # Read image file into numpy array
+            img_bytes = image_file.read()
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            # Process using our simplified method
+            return self.process_image(img_np)
+            
+        except Exception as e:
+            logger.error(f"Error processing uploaded image: {e}")
+            return None
+            
     def _locate_faces(self, image):
         """Locate faces in image using OpenCV"""
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -140,24 +70,16 @@ class CameraService:
         )
 
     def green_box(self, img, faces, dom_emo=None, confidence=None):
-        """(click for deets) Why we make a copy
-        We wanna create a copy so we can scribble thie one with 
-        funny green boxes. And if we have the original one, 
-        it would make adding more features easier
-        """
-        
+        """Draw debug information on the image"""
         # Add timestamp
         cv2.putText(img, time.strftime("%A:%D   Time(24H):%H:%M"), (10, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         # For each face, draw green rectangle
         for x, y, w, h in faces:
-            # Draw rectangle
             cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
             
-            # Add emotion label if available
             if dom_emo and confidence:
-                # the .0 in this is to say by the 0th decimal
                 label = f"{dom_emo} ({confidence:.1f}%)"
                 cv2.putText(img, label, (x, y-10), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
@@ -172,7 +94,7 @@ class CameraService:
                 img_path=image, 
                 actions=['emotion'],
                 enforce_detection=False,
-                detector_backend='opencv',
+                detector_backend=self.detector_backend,
                 align=True
             )
             
@@ -188,11 +110,7 @@ class CameraService:
             dominant_emotion = max(normalized_scores.items(), key=lambda x: x[1])[0]
             confidence = normalized_scores[dominant_emotion]
             
-            # Log results
             logger.info(f"Face detected - Dominant emotion: {dominant_emotion}")
-            logger.info("All emotion scores:")
-            for emotion, score in emotion_scores.items():
-                logger.info(f"  {emotion}: {score}")
             
             return dominant_emotion, confidence, emotion_scores
             
@@ -202,18 +120,9 @@ class CameraService:
 
     def _normalize_emotion_scores(self, emotion_scores):
         """Normalize emotion scores to percentages"""
-        # Validate scores
         total_score = sum(emotion_scores.values())
         if total_score == 0:
-            logger.error("Invalid emotion scores - all zeros")
             return None
-        
-        # Handle unreasonably high scores
-        if any(score > 1000 for score in emotion_scores.values()):
-            logger.warning("Unreasonably high emotion scores detected, normalizing...")
-            max_score = max(emotion_scores.values())
-            emotion_scores = {k: v/max_score for k, v in emotion_scores.items()}
-            total_score = sum(emotion_scores.values())
         
         # Convert to percentages
         return {
@@ -223,26 +132,47 @@ class CameraService:
 
     def _format_emotion_response(self, dominant_emotion, confidence, emotion_scores):
         """Prepare the response based on confidence threshold"""
+        # Convert numpy types to standard Python types
+        emotion_scores = {k: float(v) for k, v in emotion_scores.items()}
+        
         # High confidence case
         if confidence >= self.confidence_threshold:
             self.previous_emotion = dominant_emotion
-            logger.info(f"Using detected emotion: {dominant_emotion}")
-            return self._convert_numpy_types({
+            return {
                 'emotion': dominant_emotion,
-                'confidence': confidence,
+                'confidence': float(confidence),
                 'all_emotions': emotion_scores
-            })
+            }
         
         # Fall back to previous emotion if available
         elif self.previous_emotion:
-            logger.info(f"Low confidence ({confidence}) - Using previous emotion: {self.previous_emotion}")
-            return self._convert_numpy_types({
+            return {
                 'emotion': self.previous_emotion,
                 'confidence': 0.0,
                 'all_emotions': emotion_scores,
                 'note': 'Low confidence, using previous emotion'
-            })
+            }
         
         # No reliable emotion detected
-        logger.info("No reliable emotion detected")
-        return None 
+        return None
+    
+    def set_detector(self, backend_name):
+        """Change the face detector backend"""
+        if backend_name in self.available_backends:
+            self.detector_backend = backend_name
+            logger.info(f"Changed face detector to: {backend_name}")
+            return True
+        else:
+            logger.warning(f"Invalid backend: {backend_name}")
+            return False 
+
+    def save_current_image(self, image, filename='logs/last_frame.jpg'):
+        """Save the current image to disk"""
+        try:
+            # Save to file
+            cv2.imwrite(filename, image)
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error saving image: {e}")
+            return False 

@@ -127,19 +127,20 @@ def chat_endpoint():
         logger.warning(f"Chat endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/detect_face', methods=['POST'])
-def detect_face():
+@app.route('/api/emotion-detection-binary', methods=['POST'])
+def detect_emotion_binary():
     try:
-        data = request.get_json()
-        image_data = data['image']
-        result = camera_service.detect_face(image_data)
-        
-        if result is None:
-            return jsonify({'error': 'No face detected'}), 400
+        # Get image file from request
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
             
+        image_file = request.files['image']
+        
+        # Process with camera service
+        result = camera_service.detect_face_from_file(image_file)
         return jsonify(result)
     except Exception as e:
-        camera_logger.error(f"Emotion detection error: {str(e)}")
+        logger.error(f"Error processing image: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
