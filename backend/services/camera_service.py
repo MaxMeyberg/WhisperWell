@@ -56,6 +56,7 @@ class CameraService:
         """Process image from file upload"""
         try:
             img.save("logs/last_frame.jpg")
+            # TODO: Add in the emotions
             objs = DeepFace.analyze(img_path = "logs/last_frame.jpg", actions = ['emotion'], detector_backend = "mtcnn", align = True)
             print("--------------------------------")
             print(objs)

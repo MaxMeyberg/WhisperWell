@@ -37,6 +37,7 @@ class ImageService:
 
     def get_reference_image(self, character_id):
         """Get base64 encoded reference image for character"""
+        print("We got to reference image")
         # Load directly from file
         try:
             #see which character we are using:
@@ -47,9 +48,8 @@ class ImageService:
             else:
                 raise ValueError(f"Invalid character ID: {character_id}")
             
-
             image_path = os.path.join(os.path.dirname(__file__), "..", "assets", filename)
-            
+            print(f"Looking for image at: {image_path}")
             # Check if the file exists
             if os.path.exists(image_path):
                 with open(image_path, 'rb') as f:
@@ -57,11 +57,10 @@ class ImageService:
                     return base64.b64encode(image_bytes).decode('utf-8')
             else:
                 logger.error(f"Image not found: {image_path}")
+                return None
         except Exception as e:
-            logger.error(f"Error loading reference image: {str(e)}")
-        
-        logger.warning(f"No reference image found for {character_id}")
-        return None
+            logger.error(f"Error processing image: {str(e)}")
+            return None
 
     def generate_image(self, body_language_desc, character_id='Nina'):
         """Return actual image data"""

@@ -8,7 +8,7 @@ Grandma:
 
 CHARACTERS = {
     "nina": {
-        "base_prompt": "Young Asian-European woman therapist with dark brown bob cut, blue eyes, and black blazer",
+        "base_prompt": "Young Asian-European woman therapist with dark brown bob cut, hazel eyes, and black blazer",
         "base_appearance": """
         # Core Features (MUST remain exactly the same):
         - Exact same face shape and bone structure
@@ -49,7 +49,7 @@ CHARACTERS = {
         - Professional office background with bookshelves
         """
     },
-    "harold": {
+    "Harold": {
         "base_prompt": "Elderly 72-year-old man with white hair, glasses, and distinguished facial features",
         "base_appearance": """
         # Core Features (MUST remain exactly the same):
