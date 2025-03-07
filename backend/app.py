@@ -19,9 +19,8 @@ from services.camera_service import CameraService #Face recognition
 
 # Ensure logs directory exists
 os.makedirs('logs', exist_ok=True)
-
-#TODO:Delete this after, we need to add more characters later
-character_id = 'nina'
+#default character: Nina
+character_id = 'Nina'
 # Set up loggers
 logger, camera_logger = setup_loggers()
 
@@ -75,9 +74,9 @@ def chat_endpoint():
         user_face = data.get('userFace') # for face detection
 
         # defaults to nina when a invalid character ID occurs
-        if not character_id or character_id not in ["nina", "harold"]:
+        if not character_id or character_id not in ["Nina", "Harold"]:
             logger.warning(f"Invalid character_id: {character_id}, defaulting to nina")
-            character_id = "nina"
+            character_id = "Nina"
         
         #Empty message case
         if not currMessage:

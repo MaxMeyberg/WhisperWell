@@ -2,9 +2,22 @@ import os
 import base64
 import logging
 from prompt_engineering.image_gen import get_image_prompt
+import http.client
 
 logger = logging.getLogger(__name__)
+"""
+import http.client
 
+conn = http.client.HTTPSConnection("api.us1.bfl.ai")
+
+conn.request("GET", "/v1/get_result")
+
+res = conn.getresponse()
+data = res.read()
+
+print(data.decode("utf-8"))
+
+"""
 class ImageService:
     # Available BFL FLUX models
     FLUX_MODELS = {
@@ -21,12 +34,20 @@ class ImageService:
             'x-key': api_key
         }
 
+
     def get_reference_image(self, character_id):
         """Get base64 encoded reference image for character"""
         # Load directly from file
         try:
-            # get the image from the assets folder
-            filename = f"{character_id.capitalize()}.png"
+            #see which character we are using:
+            if character_id == "Nina":
+                filename = "Nina.png"
+            elif character_id == "Harold":
+                filename = "Harold.png"
+            else:
+                raise ValueError(f"Invalid character ID: {character_id}")
+            
+
             image_path = os.path.join(os.path.dirname(__file__), "..", "assets", filename)
             
             # Check if the file exists
@@ -42,7 +63,7 @@ class ImageService:
         logger.warning(f"No reference image found for {character_id}")
         return None
 
-    def generate_image(self, body_language_desc, character_id='nina'):
+    def generate_image(self, body_language_desc, character_id='Nina'):
         """Return actual image data"""
         logger.info(f"Image generation requested for {character_id}")
         

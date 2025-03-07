@@ -40,7 +40,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Character & image state
-  const [currentCharacter, setCurrentCharacter] = useState('nina');
+  const [currentCharacter, setCurrentCharacter] = useState('Nina');
   const [currImage, setCurrImage] = useState(ninaImage);
   const [imageKey, setImageKey] = useState(0);
   
@@ -51,8 +51,8 @@ function App() {
 
   // Welcome messages for each character
   const welcomeMessages = {
-    nina: "Hey, I'm Nina, I'm here to listen to whatever is on your mind!",
-    harold: "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges."
+    Nina: "Hey, I'm Nina, I'm here to listen to whatever is on your mind!",
+    Harold: "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges."
   };
 
   /**
@@ -139,7 +139,7 @@ function App() {
 
   const handleCharacterChange = (characterId) => {
     setCurrentCharacter(characterId);
-    setCurrImage(characterId === 'nina' ? ninaImage : haroldImage);
+    setCurrImage(characterId === 'Nina' ? ninaImage : haroldImage);
     
     // Reset chat with appropriate welcome message
     setMessages([
@@ -206,7 +206,7 @@ function App() {
                   }}
                 >
                   <Message.Header sender={msg.sender === "bot" ? 
-                    (currentCharacter === "nina" ? "Nina" : "Harold") : "You"} 
+                    (currentCharacter === "Nina" ? "Nina" : "Harold") : "You"} 
                   />
                 </Message>
               ))}

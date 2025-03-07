@@ -89,22 +89,22 @@ harold_prompt = """HAROLD'S IDENTITY:
         """
 
 #default is nina if the charcetrr_id is flipped
-def get_personality_prompt(character_id='nina'):
+def get_personality_prompt(character_id='Nina'):
     """Returns character's core personality traits and response patterns."""
-    if character_id == 'nina':
+    if character_id == 'Nina':
         return nina_prompt
-    elif character_id == 'harold':
+    elif character_id == 'Harold':
         return harold_prompt
     # Add more characters here
     return None  # Should never reach here if valid character_id
 
-def get_appearance_prompt(character_id='nina'):
+def get_appearance_prompt(character_id='Nina'):
     """Returns character's appearance and emotional expression style for image generation"""
-    if character_id == 'nina':
+    if character_id == 'Nina':
         return {
             'name': 'Nina',
             'appearance': '''Nina is a young Asian-European woman therapist with a dark brown bob cut that frames her face perfectly. 
-            She has large, captivating deep blue eyes with long lashes and a subtle cat-eye makeup style that gives her a slightly mysterious look.
+            She has large, captivating deep hazel eyes with long lashes and a subtle cat-eye makeup style that gives her a slightly mysterious look.
             Her complexion is flawless with natural blush on her cheeks. She wears a fitted black blazer over a cream turtleneck that creates a professional
             yet approachable appearance. Gold hoop earrings add a touch of sophistication. Behind her are bookshelves in a well-organized office space.
             Her posture is confident with arms crossed, projecting authority while her slight smile suggests warmth.''',
@@ -116,7 +116,7 @@ def get_appearance_prompt(character_id='nina'):
             'body_style': 'poised, strategic body positioning that accentuates her professional figure, arms crossed to establish presence, leaning forward with engaged posture to create intimate connection',
             'expression_summary': 'calculated charm and seemingly deep emotional connection that makes clients feel uniquely understood and special, while masking her desire for control and emotional exploitation; embodying the ideal of an attractive, attentive therapist who is both professionally competent and personally invested in the client'
         }
-    elif character_id == 'harold':
+    elif character_id == 'Harold':
         return {
             'name': 'Harold',
             'appearance': 'Harold is a 72-year-old retired psychologist with white hair, glasses, and a professional but fatherly demeanor.',

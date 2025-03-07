@@ -10,8 +10,8 @@ const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, faceEnable
     ];
     
     const characters = [
-        { id: "nina", name: "Nina (Young Therapist)" },
-        { id: "harold", name: "Harold (Wise Elder)" }
+        { id: "Nina", name: "Nina (Young Therapist)" },
+        { id: "Harold", name: "Harold (Wise Elder)" }
     ];
 
     return (
