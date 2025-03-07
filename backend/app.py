@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import logging
 import base64
 from dev_loggers.logging_config import setup_loggers
+import sys
+
 
 # Import services
 from services.chat_service import ChatService #Chat GPT
@@ -99,13 +101,12 @@ def chat_endpoint():
             return jsonify({"error": "No message provided"}), 400
     
         # Use services for chat, emotion, and image generation
-        ninaResponse, chatHistory = chat_service.handle_chat(
+        ninaResponse, chatHistory, body_language_desc = chat_service.handle_chat(
             currMessage, sessionId, character_id, 
             user_face
         )
         #emotion is the variable which is a prompt describing the body language of the character
-        body_language = chat_service.analyze_body_language(chatHistory, character_id)
-        image = image_service.generate_image(body_language, character_id=character_id)
+        image = image_service.generate_image(body_language_desc, character_id=character_id)
         
         # Only generate voice if enabled
         audioData = None
@@ -127,7 +128,7 @@ def chat_endpoint():
         logger.warning(f"Chat endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/emotion-detection-binary', methods=['POST'])
+@app.route('/api/read_face_portal', methods=['POST'])
 def detect_emotion_binary():
     try:
         # Get image file from request
@@ -135,9 +136,8 @@ def detect_emotion_binary():
             return jsonify({'error': 'No image provided'}), 400
             
         image_file = request.files['image']
-        
         # Process with camera service
-        result = camera_service.detect_face_from_file(image_file)
+        result = camera_service.read_face(image_file)
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error processing image: {e}")

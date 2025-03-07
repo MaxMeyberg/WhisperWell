@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Optional
 from openai import OpenAI
-from prompt_engineering.personalities import get_personality_prompt, get_personality_description
+from prompt_engineering.personalities import get_personality_prompt, get_appearance_prompt
 from prompt_engineering.image_gen import get_image_prompt
 
 logger = logging.getLogger(__name__)
@@ -23,12 +23,12 @@ class ChatService:
         except Exception as e:
             logger.error(f"AI response error: {str(e)}")
             return f"Error: {str(e)}"
-
-    def analyze_body_language(self, chatHistory, character_id) -> Dict[str, str]:
-        """Analyzes chat to determine appropriate body language and expressions"""
+            
+    def analyze_body_language(self, chatHistory, character_id) -> str:
+        """Analyzes chat to return text description of appropriate body language"""
         
         # Get character description from personalities.py
-        character_desc = get_personality_description(character_id)
+        character_desc = get_appearance_prompt(character_id)
         
         # Create body language analysis prompt using character description
         system_content = f"""
@@ -39,18 +39,8 @@ class ChatService:
             
             {character_desc['appearance']}
             
-            Format your response EXACTLY as:
-            CONVERSATIONAL CONTEXT: [Brief analysis of the conversation's tone]
-            
-            IMAGE PROMPT FOR BLACK FOREST LABS:
-            - Expression: [Description of facial expression - {character_desc['expression_style']}]
-            - Eyes: [Eye expression - {character_desc['eye_style']}]
-            - Mouth: [Mouth position - {character_desc['mouth_style']}]
-            - Eyebrows: [Eyebrow position - {character_desc['eyebrow_style']}]
-            - Head Position: [Any slight tilts or turns - {character_desc['head_style']}]
-            - Body Language: [Posture - {character_desc['body_style']}]
-            
-            {character_desc['name']}'s expressions convey {character_desc['expression_summary']}.
+            Provide a paragraph describing the body language how {character_desc['name']} would appear in this moment of conversation.
+            Focus on facial expressions, posture, and subtle body language cues.
         """
 
         emotion_prompt = [
@@ -60,35 +50,18 @@ class ChatService:
         
         try:
             response = self.get_ai_response(emotion_prompt)
-            print("Emotional Analysis:", response)  # For debugging
-            
-            # Parse response into dict for image generation
-            lines = response.split('\n')
-            emotion_dict = {}
-            current_section = None
-            
-            for line in lines:
-                if 'Expression:' in line:
-                    emotion_dict['expression'] = line.split('Expression:')[1].strip()
-                elif 'Body Language:' in line:
-                    emotion_dict['gesture'] = line.split('Body Language:')[1].strip()
-            
-            # Generate final image prompt here
-            final_prompt = get_image_prompt(character_id, emotion_dict)
-            emotion_dict['final_prompt'] = final_prompt
-            
-            return emotion_dict
+            return response  # Just return the text analysis directly
         except Exception as e:
-            logger.error(f"Error in analyze_emotional_context: {e}")
-            
-            return {'final_prompt': f"Default {character_id} expression, neutral pose"}
+            logger.error(f"Error in analyze_body_language: {e}")
+            return f"Default {character_id} expression: neutral, attentive posture with subtle nod of understanding."
 
     def handle_chat(self, currMessage, sessionId, character_id, user_face = None):
         """Main chat handling method"""
         try:
             # Create a character-specific session ID to maintain separate histories
             character_session_id = f"{sessionId}_{character_id}"
-            
+
+
             if character_session_id not in self.allChatHistory:
                 """ (click for more deets)
                 --------------------------------[CONCEPT]--------------------------------
@@ -127,34 +100,41 @@ class ChatService:
                 self.allChatHistory[character_session_id] = [
                     {"role": "system", "content": systemPrompt}
                 ]
-            
-            # Add user emotion context if available
+                # register the chat history for this current talk
+                chatHistory = self.allChatHistory[character_session_id]
+
+            #adds face recognition if enabled 
             if user_face:
                 emotion_message = {
                     "role": "system", 
                     "content": f"The user appears to be feeling {user_face.get('emotion')} (confidence: {user_face.get('confidence', 0):.2f}). Take this into account in your response."
                 }
                 self.allChatHistory[character_session_id].append(emotion_message)
+            # send chatHistory to OPEN AI w get_ai_response
             
-            # Register chat History 
+            # FIX: Add user message BEFORE getting AI response
             self.allChatHistory[character_session_id].append(
                 {"role": "user", "content": currMessage}
             )
-            # register the chat history for this current talk
+            
+            # Make sure chatHistory is up to date
             chatHistory = self.allChatHistory[character_session_id]
             
-            # send chatHistory to OPEN AI w get_ai_response
+            # Get AI response AFTER adding user message
             aiResponse = self.get_ai_response(chatHistory)
             
-            # add nina's response to the chat history
+            # Add AI response to chat history
             chatHistory.append(
                 {"role": "assistant", "content": aiResponse}
             )
             
-            # No external saving needed - already in memory
+            # Get body language description as text
+            body_language_text = self.analyze_body_language(chatHistory, character_id)
+            print("Body Language Analysis:", body_language_text)
             
-            return aiResponse, chatHistory
+            # Return all needed information
+            return aiResponse, chatHistory, body_language_text
             
         except Exception as e:
             logger.error(f"Chat handling error: {str(e)}")
-            return None, None
+            return None, None, None

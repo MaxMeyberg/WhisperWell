@@ -109,6 +109,7 @@ def get_image_prompt(character_id, body_language):
     {style_req}
     - Only change emotional expression
     - Keep all core features identical to reference image
+    - DO NOT CHANGE THE WAY THE IMAGE LOOKS, ONLY
     """
     
     return prompt
