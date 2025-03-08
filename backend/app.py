@@ -72,6 +72,7 @@ def chat_endpoint():
         voiceEnabled = data.get('voiceEnabled')
         character_id = data.get('character')
         user_face = data.get('userFace') # for face detection
+        FLUX_model = data.get('model', 'standard')  # Add this line with default model
 
         # defaults to nina when a invalid character ID occurs
         if not character_id or character_id not in ["Nina", "Harold"]:
@@ -105,7 +106,11 @@ def chat_endpoint():
             user_face
         )
         #emotion is the variable which is a prompt describing the body language of the character
-        image = image_service.generate_image(body_language_desc, character_id=character_id)
+        image = image_service.generate_image(
+            body_language_desc, 
+            character_id=character_id,
+            FLUX_model=FLUX_model
+        )
         
         # Only generate voice if enabled
         audioData = None

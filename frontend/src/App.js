@@ -48,6 +48,7 @@ function App() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [faceEnabled, setFaceEnabled] = useState(false);
   const [userFace, setUserFace] = useState(null);
+  const [CurrFLUXModel, setCurrFLUXModel] = useState('standard');
 
   // Welcome messages for each character
   const welcomeMessages = {
@@ -78,7 +79,7 @@ function App() {
     
     try {
       // Send to backend
-      const response = await fetch('http://127.0.0.1:5001/api/chat', {
+      const response = await fetch('http://localhost:5001/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,7 +87,8 @@ function App() {
           sessionId: 'default',
           voiceEnabled,
           character: currentCharacter,
-          userFace: faceEnabled ? currentFace : null
+          userFace: faceEnabled ? currentFace : null,
+          model: CurrFLUXModel
         })
       });
 
@@ -171,7 +173,8 @@ function App() {
         onVoiceToggle={() => setVoiceEnabled(!voiceEnabled)}
         faceEnabled={faceEnabled}
         onFaceToggle={() => setFaceEnabled(!faceEnabled)}
-        onModelChange={(model) => console.log(`Switched to ${model} model`)}
+        FLUXModel={CurrFLUXModel}
+        onModelChange={(model) => setCurrFLUXModel(model)}
         currentCharacter={currentCharacter}
         onCharacterChange={handleCharacterChange}
       />

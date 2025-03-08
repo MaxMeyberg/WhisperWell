@@ -1,12 +1,12 @@
 import React from 'react';
 import './SettingsMenu.css';
 
-const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, faceEnabled, onFaceToggle, onModelChange, currentCharacter, onCharacterChange }) => {
+const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, faceEnabled, onFaceToggle, onModelChange, currentCharacter, onCharacterChange, FLUXModel }) => {
     const models = [
-        { id: "ultra", name: "Ultra" },
         { id: "standard", name: "Standard" },
         { id: "fast", name: "Fast" },
-        { id: "anime", name: "Anime" }
+        { id: "anime", name: "Anime" },
+        { id: "ultra", name: "Ultra" },
     ];
     
     const characters = [
@@ -71,7 +71,10 @@ const SettingsMenu = ({ isOpen, onClose, voiceEnabled, onVoiceToggle, faceEnable
                     {/* Model Selector */}
                     <div className="setting-item">
                         <span>Image Quality</span>
-                        <select onChange={(e) => onModelChange(e.target.value)}>
+                        <select 
+                            value={FLUXModel} 
+                            onChange={(e) => onModelChange(e.target.value)}
+                        >
                             {models.map(model => (
                                 <option key={model.id} value={model.id}>
                                     {model.name}
