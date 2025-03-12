@@ -50,7 +50,7 @@ const FaceDetector = ({ onFaceUpdate, isEnabled }) => {
         formData.append('image', blob, 'webcam.jpg');
         
         // Send to backend
-        const response = await fetch('http://localhost:5001/api/emotion-detection-binary', {
+        const response = await fetch('http://localhost:5001/api/read_face_portal', {
           method: 'POST',
           body: formData,  // No need to set Content-Type, browser sets it automatically
         });
@@ -77,8 +77,8 @@ const FaceDetector = ({ onFaceUpdate, isEnabled }) => {
   useEffect(() => {
     let timerId;
     if (isActive) {
-      // Run face detection every 3 seconds
-      timerId = setInterval(captureAndSendImage, 3000);
+      // Run face detection every 0.5 seconds
+      timerId = setInterval(captureAndSendImage, 500);
     }
     
     return () => {

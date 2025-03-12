@@ -1,5 +1,4 @@
 """
-TODO: These are the prompts for the characters: 
 
 Nina:
 Grandpa:

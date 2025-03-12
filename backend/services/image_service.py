@@ -6,6 +6,7 @@ import http.client
 import requests
 import json
 import time
+import random
 
 logger = logging.getLogger(__name__)
 """
@@ -95,16 +96,15 @@ class ImageService:
             print(data.decode("utf-8"))
         """
         payload = {
-            "prompt": "Young female anime therapist with tears streaming down face, blue sad aura, very depressed expression, crying anime girl, sobbing with eyes closed",
-            "prompt_upsampling": False,
-            "seed": 123,
-            #Optional seed for reproducibility. If not provided, a random seed will be used.
-            "aspect_ratio": "9:16", # verticap phone layout, use 1:1 for squares
-            "safety_tolerance": 6, #Tolerance level 0 - 6: 1 0 is lots, 6 means no strictness
+            "prompt": body_language_desc,
+            "prompt_upsampling": True,
+            "seed": random.randint(1, 10000),
+            "aspect_ratio": "9:16",
+            "safety_tolerance": 4,
             "output_format": "png",
             "raw": False,
             "image_prompt": image_data,
-            "image_prompt_strength": 0.1,  # Better balance of identity vs emotion
+            "image_prompt_strength": 0.4
         }
         
         try:

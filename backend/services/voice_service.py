@@ -3,6 +3,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+#TODO: FIX VOICE MODE
 class VoiceService:
     def __init__(self, api_key):
         self.api_key = api_key
