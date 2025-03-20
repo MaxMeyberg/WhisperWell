@@ -10,8 +10,8 @@ class VoiceService:
         self.api_url = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         # Add multiple voice IDs for characters
         self.voice_ids = {
-            "nina": "m7dvBJNSAB0scDjhPYgk",  # Nina Voice ID
-            "harold": "NOpBlnGInO9m6vDvFkFC"  # Harold Voice ID
+            "Nina": "m7dvBJNSAB0scDjhPYgk",  # Nina Voice ID
+            "Harold": "NOpBlnGInO9m6vDvFkFC"  # Harold Voice ID
         }
         self.headers = {
             "Accept": "audio/mpeg",
@@ -27,7 +27,8 @@ class VoiceService:
                 logger.error("Missing ELEVENLABS_API_KEY environment variable")
                 return None
                 
-            voice_id = self.voice_ids.get(character_id)
+            # More robust lookup with fallback
+            voice_id = self.voice_ids.get(character_id) or self.voice_ids.get(character_id.lower())
             if not voice_id:
                 logger.error(f"No voice ID configured for: {character_id}")
                 return None

@@ -52,15 +52,56 @@ class CameraService:
     )
 
     """
+
+    
     def read_face(self, img):
-        """Process image from file upload"""
+        """Process image and return normalized emotion percentages"""
         try:
             img.save("logs/last_frame.jpg")
             # TODO: Add in the emotions
             objs = DeepFace.analyze(img_path = "logs/last_frame.jpg", actions = ['emotion'], detector_backend = "mtcnn", align = True)
             print("--------------------------------")
-            print(objs)
+
+            emotions = objs[0]['emotion']
+            print(self.format_percentages(emotions))
             return objs
         except Exception as e:
             logger.error(f"Error processing uploaded image: {e}")
             return None
+    
+
+    def format_percentages(self, emotions_data):
+        """
+        Format emotion data into normalized percentages
+        
+        Args:
+            emotions_data (dict): Raw emotion scores
+            
+        Returns:
+            dict: Formatted structure with normalized percentages
+        """
+        # Convert any numpy types to Python native types
+        emotions = {k: float(v) for k, v in emotions_data.items()}
+        
+        # Calculate total for normalization
+        total = sum(emotions.values())
+        
+        # Normalize to percentages
+        normalized_emotions = {}
+        for emotion, value in emotions.items():
+            percentage = round((value / total) * 100, 1)  # Round to 1 decimal place
+            normalized_emotions[emotion] = percentage
+        
+        # Sort emotions by percentage (highest first)
+        sorted_emotions = dict(sorted(normalized_emotions.items(), 
+                                     key=lambda x: x[1], 
+                                     reverse=True))
+        
+        # Get dominant emotion
+        dominant_emotion = list(sorted_emotions.keys())[0]
+        
+        return {
+            "dominant_emotion": dominant_emotion,
+            "confidence": sorted_emotions[dominant_emotion],
+            "emotions": sorted_emotions
+        }
