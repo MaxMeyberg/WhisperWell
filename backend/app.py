@@ -1,4 +1,4 @@
-from openai import OpenAI
+import openai
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os
@@ -8,6 +8,7 @@ import logging
 import base64
 from dev_loggers.logging_config import setup_loggers
 import sys
+from PIL import Image
 
 
 # Import services
@@ -28,7 +29,7 @@ logger, camera_logger = setup_loggers()
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000"],
+        "origins": ["http://localhost:3000", "http://localhost:3001"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
         "expose_headers": ["Content-Type"],
@@ -38,8 +39,10 @@ CORS(app, resources={
 
 # Initialize both clients
 load_dotenv()
-open_ai_client = OpenAI()  # It will automatically use OPENAI_API_KEY from environment
-"""TODO: make a new folder called "Setup which calls all API keys"""
+
+# Initialize OpenAI
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
 # Initialize services
 chat_service = ChatService(
     api_key=os.getenv('OPENAI_API_KEY'),
@@ -133,18 +136,19 @@ def chat_endpoint():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/read_face_portal', methods=['POST'])
-def detect_emotion_binary():
+def read_face_portal():
     try:
-        # Get image file from request
         if 'image' not in request.files:
             return jsonify({'error': 'No image provided'}), 400
             
-        image_file = request.files['image']
-        # Process with camera service
-        result = camera_service.read_face(image_file)
-        return jsonify(result)
+        image = Image.open(request.files['image'])
+        face_data = camera_service.read_face(image)
+        
+        # Let jsonify handle the NumPy types
+        return jsonify(face_data)
+        
     except Exception as e:
-        logger.error(f"Error processing image: {e}")
+        logger.error(f"Error in face detection endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

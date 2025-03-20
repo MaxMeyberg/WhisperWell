@@ -56,6 +56,9 @@ function App() {
     Harold: "Hello there, I'm Harold. With my decades of experience, I'm here to help you find practical solutions to life's challenges."
   };
 
+  // Add this to your state variables
+  const [captureCounter, setCaptureCounter] = useState(0);
+
   /**
    * Handles sending messages to the backend server and updating the chat UI.
    * 
@@ -74,10 +77,20 @@ function App() {
     setIsResponding(true);
     setIsTyping(true);
     
-    // Capture face if enabled
-    let currentFace = userFace;
+    // Trigger face capture if enabled
+    if (faceEnabled) {
+      setCaptureCounter(prev => prev + 1);
+    }
+    
+    // Wait a moment for face capture to complete
+    if (faceEnabled) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
     
     try {
+      // Capture face if enabled
+      let currentFace = userFace;
+      
       // Send to backend
       const response = await fetch('http://localhost:5001/api/chat', {
         method: 'POST',
@@ -92,7 +105,13 @@ function App() {
         })
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      // Add better error handling
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Server error: ${response.status}`, errorText);
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+
       const data = await response.json();
       
       // Update therapist image
@@ -115,7 +134,12 @@ function App() {
       ]);
       
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error details:", error);
+      // Show error to user
+      setMessages(prev => [
+        ...prev,
+        { message: "Sorry, I'm having trouble connecting. Please try again.", sender: "bot", timestamp: new Date() }
+      ]);
       setIsResponding(false);
     } finally {
       setIsTyping(false);

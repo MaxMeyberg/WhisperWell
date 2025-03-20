@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Optional
-from openai import OpenAI
+import openai
 from prompt_engineering.personalities import get_personality_prompt, get_appearance_prompt
 from prompt_engineering.image_gen import get_image_prompt
 
@@ -8,13 +8,13 @@ logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self, api_key):
-        self.client = OpenAI(api_key=api_key)
+        openai.api_key = api_key
         self.allChatHistory = {}  # Local memory only
         
     def get_ai_response(self, chatHistory) -> Optional[str]:
         """Get response from OpenAI based on chat history"""
         try:
-            response = self.client.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4-0125-preview",  # GPT-4 Turbo
                 messages=chatHistory
             )
