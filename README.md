@@ -1,4 +1,4 @@
-# Nina AI Therapist
+# WhisperWell – AI Therapy Platform 
 
 An AI-powered emotion detection application that analyzes facial expressions in real-time and provides insights.
 
