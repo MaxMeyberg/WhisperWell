@@ -11,7 +11,7 @@ An AI-powered emotion detection application that analyzes facial expressions in 
 
 ### Backend Setup
 
-1. **Create and activate virtual environment**
+1. **Create and activate the virtual environment**
    ```bash
    cd backend
    python -m venv venv
